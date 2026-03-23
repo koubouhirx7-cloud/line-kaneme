@@ -2,6 +2,8 @@ fastapi
 uvicorn
 sqlalchemy
 pydantic
+pydantic-settings
 python-dotenv
 line-bot-sdk
 psycopg2-binary
+pg8000
