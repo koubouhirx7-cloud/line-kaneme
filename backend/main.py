@@ -229,3 +229,11 @@ def handle_message(event):
                         messages=[TextMessage(text=reply_text)]
                     )
                 )
+
+from fastapi.responses import JSONResponse
+import traceback
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    err = traceback.format_exc()
+    return JSONResponse(status_code=500, content={"message": "Internal Crash", "trace": err})
