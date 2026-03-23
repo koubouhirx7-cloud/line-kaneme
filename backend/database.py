@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Retrieve Vercel Postgres URL, fallback to local sqlite
-SQLALCHEMY_DATABASE_URL = os.getenv("POSTGRES_URL", "sqlite:///./hubcargo.db")
+SQLALCHEMY_DATABASE_URL = os.getenv("POSTGRES_URL", "sqlite:////tmp/hubcargo.db")
 
 # Vercel might give postgres:// instead of postgresql://
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
