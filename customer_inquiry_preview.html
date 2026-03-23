@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配車手配システム - 顧客からの依頼受付フロー</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .line-green {
+            background-color: #06C755;
+        }
+
+        .line-bg {
+            background-color: #849ebf;
+        }
+
+        .chat-bubble {
+            position: relative;
+        }
+
+        .chat-bubble.left::before {
+            content: "";
+            position: absolute;
+            top: 10px;
+            left: -8px;
+            border: 8px solid transparent;
+            border-right-color: white;
+            border-left: 0;
+            border-top: 0;
+            margin-top: -4px;
+        }
+
+        .chat-bubble.right::before {
+            content: "";
+            position: absolute;
+            top: 10px;
+            right: -8px;
+            border: 8px solid transparent;
+            border-left-color: #06C755;
+            border-right: 0;
+            border-top: 0;
+            margin-top: -4px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        /* LIFF Modal Slide Up Animation */
+        .liff-modal {
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .liff-modal.open {
+            transform: translateY(0);
+        }
+
+        .new-request-anim {
+            animation: highlight 2s ease-out;
+        }
+
+        @keyframes highlight {
+            0% {
+                background-color: #fef08a;
+            }
+
+            100% {
+                background-color: white;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 h-screen flex flex-col items-center p-4 font-sans text-gray-800">
+
+    <div class="w-full max-w-5xl text-center mb-6 text-white">
+        <h1 class="text-3xl font-bold mb-2">🚚 顧客から受付窓口への依頼フロー (LIFFフォーム)</h1>
+        <p class="text-gray-300">お客様がLINEのリッチメニューから開いたフォームで依頼を入力し、要カーゴのダッシュボードに届く流れです。</p>
+    </div>
+
+    <div class="max-w-6xl w-full flex flex-col md:flex-row gap-8 justify-center items-center">
+
+        <!-- =======================
+             左側：お客様のLINE画面
+             ======================= -->
+        <div
+            class="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border-8 border-gray-800 h-[750px] flex flex-col relative w-[360px] flex-shrink-0">
+            <!-- スマホステータスバー -->
+            <div class="bg-gray-800 text-white text-center py-2 text-[10px] font-bold flex justify-between px-6 z-20">
+                <span>9:41</span>
+                <div class="flex gap-1"><span>📶</span><span>🔋</span></div>
+            </div>
+
+            <!-- LINEチャットヘッダー -->
+            <div class="bg-[#273246] text-white flex items-center px-4 py-3 shadow-md z-10">
+                <span class="text-xl mr-3 cursor-pointer">〈</span>
+                <div class="flex-1">
+                    <h2 class="font-bold text-sm">要カーゴ 公式LINE</h2>
+                    <p class="text-[10px] text-gray-300">公式アカウント</p>
+                </div>
+                <span class="text-xl cursor-pointer">≡</span>
+            </div>
+
+            <!-- LINEトークルーム背景 -->
+            <div class="line-bg flex-1 p-3 overflow-y-auto flex flex-col relative" id="customerChatContainer">
+                <div class="flex justify-center mb-4 mt-2">
+                    <span class="bg-black/20 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-sm">今日</span>
+                </div>
+
+                <div class="flex mb-4">
+                    <div
+                        class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold mr-2 text-xs shadow-md shrink-0">
+                        要</div>
+                    <div
+                        class="chat-bubble left bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[85%] shadow-md p-3 text-sm">
+                        お友だち登録ありがとうございます！<br>
+                        配車のご依頼やお問い合わせは、下部のメニューからお願いいたします。
+                    </div>
+                </div>
+            </div>
+
+            <!-- LINE リッチメニュー風 -->
+            <div class="bg-white border-t flex flex-col pb-5 z-10">
+                <div
+                    class="text-center py-1 text-gray-400 text-[10px] bg-gray-50 border-b cursor-pointer hover:bg-gray-100">
+                    ▼ メニューを開く/閉じる
+                </div>
+                <div class="grid grid-cols-2 h-32">
+                    <button onclick="openCustomerLiff()"
+                        class="border-r border-b flex flex-col items-center justify-center gap-2 hover:bg-gray-50 active:bg-gray-100 transition group p-2">
+                        <div
+                            class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17l6-6-6-6">
+                                </path>
+                            </svg>
+                        </div>
+                        <span class="text-xs font-bold text-gray-700">🚚 新規 手配依頼</span>
+                    </button>
+                    <button
+                        class="border-b flex flex-col items-center justify-center gap-2 hover:bg-gray-50 active:bg-gray-100 transition group p-2 opacity-50 cursor-not-allowed">
+                        <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                            <span class="text-xl">💬</span>
+                        </div>
+                        <span class="text-xs font-bold text-gray-700">その他 お問い合わせ</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- iOSホームバー -->
+            <div
+                class="absolute bottom-1.5 left-1/2 transform -translate-x-1/2 w-1/3 h-1 bg-gray-300 rounded-full z-20">
+            </div>
+
+            <!-- =======================
+                 顧客用 LIFF モック (下からせり上がる)
+                 ======================= -->
+            <div id="customerLiffModal"
+                class="liff-modal absolute inset-x-0 bottom-0 bg-white z-30 h-[85%] rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] flex flex-col">
+                <div class="flex justify-between items-center px-4 py-3 border-b">
+                    <button onclick="closeCustomerLiff()" class="text-gray-500 font-bold">✕</button>
+                    <span class="font-bold text-sm text-gray-800">配車手配 ご依頼フォーム</span>
+                    <span class="w-4"></span>
+                </div>
+                <div class="p-5 overflow-y-auto flex-1 bg-gray-50">
+                    <form id="customerLiffForm" class="space-y-4" onsubmit="submitCustomerLiffForm(event)">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">御社名・ご担当者様名 <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" id="custName" required
+                                class="w-full text-sm border-gray-300 rounded border p-2 bg-white"
+                                placeholder="例: 株式会社サンプル 田中">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">引取先（ご住所等を簡潔に） <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" id="custFrom" required
+                                class="w-full text-sm border-gray-300 rounded border p-2 bg-white"
+                                placeholder="例: 東京都品川区大崎">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">納品先（ご住所等を簡潔に） <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" id="custTo" required
+                                class="w-full text-sm border-gray-300 rounded border p-2 bg-white"
+                                placeholder="例: 千葉県浦安市">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">お荷物の内容 <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" id="custDetail" required
+                                class="w-full text-sm border-gray-300 rounded border p-2 bg-white"
+                                placeholder="例: 段ボール30箱、合計100kg程度">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">希望日時、その他備考</label>
+                            <textarea id="custRemarks" rows="2"
+                                class="w-full text-sm border-gray-300 rounded border p-2 bg-white"
+                                placeholder="明日午前中の引取希望です。"></textarea>
+                        </div>
+                        <div class="pt-4">
+                            <button type="submit" id="custSubmitBtn"
+                                class="w-full bg-[#06C755] hover:bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                                依頼を送信する
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 矢印アイコン -->
+        <div class="hidden md:flex flex-col items-center justify-center text-white w-24">
+            <span class="text-xs font-bold mb-2 text-center text-blue-300" id="arrowText">LIFF経由<br>データ送信</span>
+            <svg class="w-10 h-10 opacity-80 mt-1 text-blue-400" id="arrowIcon" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7">
+                </path>
+            </svg>
+        </div>
+
+        <!-- =======================
+             右側：受付窓口（要カーゴ）ダッシュボード
+             ======================= -->
+        <div
+            class="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col relative w-full md:w-[600px] h-[750px]">
+            <!-- ヘッダー -->
+            <div class="bg-slate-800 text-white p-4 shadow-md z-10 flex justify-between items-center">
+                <h2 class="font-bold text-lg flex items-center gap-2">
+                    💻 顧客依頼 受付ボード
+                </h2>
+                <div class="text-xs bg-red-500 text-white px-3 py-1 rounded-full font-bold shadow-sm animate-pulse flex items-center gap-1 hidden"
+                    id="newReqAlert">
+                    <span class="w-2 h-2 rounded-full bg-white"></span>
+                    新着依頼あり
+                </div>
+            </div>
+
+            <!-- メインエリア -->
+            <div class="flex-1 bg-gray-100 p-4 overflow-y-auto">
+                <div class="mb-4 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800 text-lg">受信トレイ (未処理)</h3>
+                    <span class="text-xs text-gray-500" id="reqCount">0件</span>
+                </div>
+
+                <div id="requestList" class="space-y-4">
+                    <!-- 初期状態は空、またはダミーを置いておく -->
+                    <div class="text-center py-10 text-gray-400 text-sm" id="emptyState">
+                        <svg class="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                            </path>
+                        </svg>
+                        新規の依頼はありません
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-3 border-t text-sm font-bold text-gray-700">
+                <p class="text-xs text-gray-500">
+                    ※ここで受けた依頼は、左メニューの「手配コントロールセンター」から協力会社へ送信できます。（本モックでは画面分割の都合上、別UIとして表現しています）</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function openCustomerLiff() {
+            document.getElementById('customerLiffModal').classList.add('open');
+            // 適当な初期値を入れておく
+            document.getElementById('custName').value = "株式会社ロジスティクス 山田";
+            document.getElementById('custFrom').value = "神奈川県横浜市";
+            document.getElementById('custTo').value = "埼玉県大宮市";
+            document.getElementById('custDetail').value = "パレット1枚 (精密機器)";
+        }
+
+        function closeCustomerLiff() {
+            document.getElementById('customerLiffModal').classList.remove('open');
+        }
+
+        function submitCustomerLiffForm(event) {
+            event.preventDefault();
+
+            const btn = document.getElementById('custSubmitBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '送信中...';
+            btn.disabled = true;
+
+            const name = document.getElementById('custName').value;
+            const from = document.getElementById('custFrom').value;
+            const to = document.getElementById('custTo').value;
+            const detail = document.getElementById('custDetail').value;
+            const remarks = document.getElementById('custRemarks').value;
+
+            setTimeout(() => {
+                closeCustomerLiff();
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+
+                // お客様LINE側に確認メッセージを表示
+                const customerChat = document.getElementById('customerChatContainer');
+                const timeStr = `${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+
+                const replyHTML = `
+                    <div class="flex mb-4 mt-2 transition-all duration-300" id="msg-${Date.now()}">
+                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold mr-2 text-xs shadow-md shrink-0">要</div>
+                        <div class="chat-bubble left bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[85%] shadow-md p-3 text-sm">
+                            ご依頼ありがとうございます！<br>
+                            内容を確認し、担当者よりご連絡いたします。<br>
+                            <div class="bg-gray-50 p-2 mt-2 rounded border border-gray-100 text-[11px] text-gray-600">
+                                控え:<br>
+                                引取: ${from}<br>納品: ${to}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                customerChat.insertAdjacentHTML('beforeend', replyHTML);
+                customerChat.scrollTop = customerChat.scrollHeight;
+
+                // ==========================
+                // 要カーゴ(PC側)のダッシュボードに反映
+                // ==========================
+
+                document.getElementById('emptyState').classList.add('hidden');
+                document.getElementById('newReqAlert').classList.remove('hidden');
+                document.getElementById('reqCount').innerText = "1件 (新着あり)";
+                document.getElementById('reqCount').classList.add('text-red-500', 'font-bold');
+
+                const requestList = document.getElementById('requestList');
+                const reqId = "YK-" + Math.floor(1000 + Math.random() * 9000);
+
+                const reqHTML = `
+                    <div class="bg-white border-l-4 border-blue-500 rounded-lg shadow-md p-4 flex flex-col gap-3 opacity-0 translate-y-4 transition-all duration-500 new-request-anim mb-4" id="reqcard-${reqId}">
+                        <div class="flex justify-between items-start border-b pb-2">
+                            <div>
+                                <span class="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">新着</span>
+                                <span class="text-xs text-gray-500 font-mono">ID: ${reqId}</span>
+                                <h4 class="font-bold text-gray-800 text-lg mt-1">${name} 様</h4>
+                            </div>
+                            <span class="text-xs text-gray-400">たった今</span>
+                        </div>
+                        
+                        <div class="text-sm grid grid-cols-5 gap-4">
+                            <div class="col-span-2">
+                                <p class="text-[10px] text-gray-500 mb-0.5">引取先</p>
+                                <p class="font-bold text-blue-700">${from}</p>
+                            </div>
+                            <div class="col-span-3">
+                                <p class="text-[10px] text-gray-500 mb-0.5">納品先</p>
+                                <p class="font-bold text-red-700">${to}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-2 rounded border border-gray-100 text-sm">
+                            <p class="text-[10px] text-gray-500 mb-0.5">荷物内容</p>
+                            <p class="text-gray-800">${detail}</p>
+                            ${remarks ? `<div class="mt-2 pt-2 border-t border-gray-200"><p class="text-[10px] text-gray-500 mb-0.5">備考</p><p class="text-gray-700 text-xs">${remarks}</p></div>` : ''}
+                        </div>
+                        
+                        <div class="flex justify-end gap-2 mt-2">
+                            <button class="bg-white border border-gray-300 text-gray-600 px-3 py-1.5 rounded text-xs font-bold hover:bg-gray-50 transition shadow-sm">詳細確認・編集</button>
+                            <button class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-700 transition shadow-sm flex items-center gap-1" onclick="this.innerHTML='手配画面へ移動しました'; this.classList.remove('bg-blue-600'); this.classList.add('bg-gray-400'); this.disabled=true;">
+                                協力会社へ手配する
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                requestList.insertAdjacentHTML('afterbegin', reqHTML);
+
+                setTimeout(() => {
+                    document.getElementById(`reqcard-${reqId}`).classList.remove('opacity-0', 'translate-y-4');
+                }, 50);
+
+            }, 800);
+        }
+    </script>
+</body>
+
+</html>

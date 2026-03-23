@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配車手配システム - アコーディオン振分UIプレビュー</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .line-green {
+            background-color: #06C755;
+        }
+
+        .line-bg {
+            background-color: #849ebf;
+        }
+
+        .chat-bubble {
+            position: relative;
+        }
+
+        .chat-bubble.left::before {
+            content: "";
+            position: absolute;
+            top: 10px;
+            left: -8px;
+            border: 8px solid transparent;
+            border-right-color: white;
+            border-left: 0;
+            border-top: 0;
+            margin-top: -4px;
+        }
+
+        .chat-bubble.right::before {
+            content: "";
+            position: absolute;
+            top: 10px;
+            right: -8px;
+            border: 8px solid transparent;
+            border-left-color: #06C755;
+            border-right: 0;
+            border-top: 0;
+            margin-top: -4px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .accordion-content {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .accordion-content.open {
+            max-height: 500px;
+            opacity: 1;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        .partner-card.active {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
+        }
+
+        /* Modal Transition */
+        #addPartnerModal {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        #addPartnerModal>div {
+            transition: transform 0.3s ease-in-out;
+            transform: scale(0.95);
+        }
+
+        #addPartnerModal:not(.hidden)>div {
+            transform: scale(1);
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 h-screen flex flex-col items-center p-4 font-sans text-gray-800">
+
+    <div class="w-full max-w-5xl text-center mb-6 text-white">
+        <h1 class="text-3xl font-bold mb-2">🏢 協力会社への顧客連絡依頼システム (ワンタップ報告版)</h1>
+        <p class="text-gray-300">お客様へ連絡するよう協力会社へ指示を出し、完了したらボタン一つで報告してもらうシンプルなフローです。</p>
+    </div>
+
+    <div class="max-w-6xl w-full flex flex-col md:flex-row gap-8 justify-center items-center">
+
+        <!-- =======================
+             左側：受付窓口（要カーゴ）ダッシュボード
+             ======================= -->
+        <div
+            class="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col relative w-full md:w-[600px] h-[750px]">
+            <!-- ヘッダー -->
+            <div class="bg-slate-800 text-white p-4 shadow-md z-10 flex justify-between items-center">
+                <h2 class="font-bold text-lg flex items-center gap-2">
+                    💻 顧客対応コントロールセンター
+                </h2>
+                <div class="text-xs bg-green-500/20 text-green-300 px-3 py-1 rounded-full border border-green-500/50">
+                    LINE連携 稼働中
+                </div>
+            </div>
+
+            <!-- メインエリア -->
+            <div class="flex-1 bg-gray-50 p-4 overflow-y-auto relative">
+                <div class="mb-4 flex justify-between items-end border-b pb-2">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg mb-1">連携先 協力会社一覧</h3>
+                        <p class="text-xs text-gray-500">顧客への連絡を依頼する拠点を選択してください。</p>
+                    </div>
+                    <button onclick="openAddPartnerModal()"
+                        class="bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 text-xs font-bold py-1.5 px-3 rounded flex items-center gap-1 transition shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        新規協力会社の追加
+                    </button>
+                </div>
+
+                <div id="partnerList" class="space-y-4">
+                    <div class="text-center text-gray-500 text-sm py-4" id="loadingPartners">
+                        <svg class="animate-spin h-5 w-5 mx-auto mb-2 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        協力会社を読み込み中...
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="bg-white p-3 border-t text-sm font-bold text-gray-700" id="dashboardFooter">
+                <span class="text-gray-400 font-normal text-xs">ステータス: </span>待機中
+            </div>
+
+            <!-- =======================
+                 協力会社 追加モーダル
+                 ======================= -->
+            <div id="addPartnerModal"
+                class="hidden absolute inset-0 bg-slate-800/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col">
+                    <div class="bg-gray-50 border-b px-4 py-3 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
+                            <span class="bg-indigo-100 text-indigo-600 p-1 rounded-md"><svg class="w-4 h-4" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z">
+                                    </path>
+                                </svg></span>
+                            新規協力会社の追加
+                        </h3>
+                        <button onclick="closeAddPartnerModal()" class="text-gray-400 hover:text-gray-600 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <form onsubmit="submitNewPartner(event)" class="p-4 space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">会社名 <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" id="newPartnerName" required
+                                class="w-full text-sm border-gray-300 rounded-md p-2 border focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="例: サンプル運輸株式会社">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">担当エリア <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" id="newPartnerArea" required
+                                class="w-full text-sm border-gray-300 rounded-md p-2 border focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="例: 関西エリア">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">所属スタッフ数</label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="newPartnerStaff"
+                                    class="w-24 text-sm border-gray-300 rounded-md p-2 border focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="0" min="0">
+                                <span class="text-sm text-gray-500">名</span>
+                            </div>
+                        </div>
+                        <div class="pt-4 flex gap-2">
+                            <button type="button" onclick="closeAddPartnerModal()"
+                                class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 rounded-md transition text-sm">キャンセル</button>
+                            <button type="submit"
+                                class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-md shadow transition text-sm">追加する</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 矢印アイコン -->
+        <div class="hidden md:flex flex-col items-center justify-center text-white w-24">
+            <span class="text-xs font-bold mb-2 text-center" id="arrowText">API経由<br>自動送信</span>
+            <svg class="w-10 h-10 opacity-80 mt-1" id="arrowIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7">
+                </path>
+            </svg>
+        </div>
+
+        <!-- =======================
+             右側：協力会社のグループLINE
+             ======================= -->
+        <div
+            class="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border-8 border-gray-800 h-[750px] flex flex-col relative w-[360px] flex-shrink-0">
+            <!-- スマホステータスバー -->
+            <div class="bg-gray-800 text-white text-center py-2 text-[10px] font-bold flex justify-between px-6 z-20">
+                <span>9:41</span>
+                <div class="flex gap-1"><span>📶</span><span>🔋</span></div>
+            </div>
+
+            <!-- LINEチャットヘッダー -->
+            <div class="bg-[#273246] text-white flex items-center px-4 py-3 shadow-md z-10">
+                <span class="text-xl mr-3 cursor-pointer">〈</span>
+                <div class="flex-1">
+                    <h2 class="font-bold text-sm" id="lineHeaderTitle">📱 待機中...</h2>
+                    <p class="text-[10px] text-gray-300" id="lineHeaderSub">左の画面から送信してください</p>
+                </div>
+                <span class="text-xl cursor-pointer">≡</span>
+            </div>
+
+            <!-- LINEトークルーム背景 -->
+            <div class="line-bg flex-1 p-3 overflow-y-auto flex flex-col relative" id="chatContainer">
+                <div class="flex justify-center mb-4 mt-2">
+                    <span class="bg-black/20 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-sm">今日</span>
+                </div>
+            </div>
+
+            <!-- LINE入力エリア -->
+            <div class="bg-gray-100 p-2 border-t flex items-center gap-2 px-3 pb-5 z-10">
+                <div class="text-gray-500 text-2xl font-light">+</div>
+                <div
+                    class="flex-1 bg-white rounded-full h-8 px-3 flex items-center text-gray-400 border border-gray-200 text-sm">
+                    Aa</div>
+                <div class="text-gray-500 text-xl">☺</div>
+                <div class="text-gray-500 text-xl">🎙</div>
+            </div>
+
+            <!-- iOSホームバー -->
+            <div
+                class="absolute bottom-1.5 left-1/2 transform -translate-x-1/2 w-1/3 h-1 bg-gray-300 rounded-full z-20">
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let currentOpenId = null;
+        let reminderTimeout = null;
+        let isResponded = false;
+
+        document.addEventListener('DOMContentLoaded', fetchPartners);
+
+        async function fetchPartners() {
+            try {
+                const res = await fetch(`${API_BASE}/partners`);
+                const partners = await res.json();
+                renderPartners(partners);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('partnerList').innerHTML = `<div class="text-red-500 text-sm text-center py-4">協力会社の読み込みに失敗しました。サーバーが起動しているか確認してください。</div>`;
+            }
+        }
+
+        function renderPartners(partners) {
+            const list = document.getElementById('partnerList');
+            list.innerHTML = '';
+            
+            if (partners.length === 0) {
+                list.innerHTML = `<div class="text-gray-500 text-sm text-center py-4">登録されている協力会社がありません。</div>`;
+                return;
+            }
+
+            partners.forEach(p => {
+                const id = `partner_${p.id}`;
+                const name = p.name;
+                const emoji = p.icon_emoji || '🏢';
+                const roleText = '登録スタッフ未設定'; // Mock data since it's not in DB yet
+
+                const cardHTML = `
+                    <div class="bg-white border text-left border-gray-200 rounded-lg shadow-sm overflow-hidden partner-card transition-all" id="card-${id}">
+                        <button onclick="toggleAccordion('${id}', '${name}', ${p.id})" class="w-full px-4 py-4 flex justify-between items-center hover:bg-gray-50 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg shadow-inner">
+                                    ${emoji}
+                                </div>
+                                <div class="text-left">
+                                    <h4 class="font-bold text-gray-800 text-base">${name}</h4>
+                                    <p class="text-[11px] text-gray-500">${roleText}</p>
+                                </div>
+                            </div>
+                            <div id="alert-${id}" class="hidden flex items-center gap-1 text-red-500 text-xs font-bold bg-red-50 px-2 py-1 rounded">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                連絡未確認
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 transform transition-transform" id="arrow-${id}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        
+                        <div id="form-${id}" class="accordion-content bg-blue-50/50 px-5 border-t border-gray-100">
+                            <form onsubmit="sendToLine(event, '${id}', '${name}', ${p.id})" class="space-y-3 pb-2">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">顧客名</label>
+                                    <input type="text" id="customer-${id}" required class="w-full text-sm border-gray-300 rounded-md p-2 border focus:ring-blue-500 focus:border-blue-500" placeholder="例: 株式会社テスト様">
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-700 mb-1">電話番号</label>
+                                        <input type="text" id="phone-${id}" required class="w-full text-sm border-gray-300 rounded-md p-2 border focus:ring-blue-500 focus:border-blue-500" placeholder="03-1234-5678">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-700 mb-1">集荷先</label>
+                                        <input type="text" id="pickup-${id}" class="w-full text-sm border-gray-300 rounded-md p-2 border focus:ring-blue-500 focus:border-blue-500" placeholder="例: 品川区">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">依頼内容</label>
+                                    <input type="text" id="detail-${id}" required class="w-full text-sm border-gray-300 rounded-md p-2 border focus:ring-blue-500 focus:border-blue-500" placeholder="集荷時間の調整連絡をお願いします。">
+                                </div>
+                                <div class="pt-2">
+                                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg flex justify-center items-center gap-2 transition">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                                        連絡依頼を送信
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                `;
+                list.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
+        function toggleAccordion(id, name, dbId) {
+            document.getElementById('lineHeaderTitle').innerText = `📱 [${name}] グループ`;
+            document.getElementById('lineHeaderSub').innerText = "配車担当者 他複数名";
+
+            const content = document.getElementById(`form-${id}`);
+            const arrow = document.getElementById(`arrow-${id}`);
+            const card = document.getElementById(`card-${id}`);
+
+            if (currentOpenId && currentOpenId !== id) {
+                const oldContent = document.getElementById(`form-${currentOpenId}`);
+                if (oldContent) {
+                    oldContent.classList.remove('open');
+                    document.getElementById(`arrow-${currentOpenId}`).classList.remove('rotate-180');
+                    document.getElementById(`card-${currentOpenId}`).classList.remove('active');
+                }
+            }
+
+            content.classList.toggle('open');
+            arrow.classList.toggle('rotate-180');
+            card.classList.toggle('active');
+
+            if (content.classList.contains('open')) {
+                const focusEl = document.getElementById(`customer-${id}`);
+                if (focusEl) focusEl.focus();
+            }
+
+            currentOpenId = content.classList.contains('open') ? id : null;
+        }
+
+        async function sendToLine(event, formId, partnerName, dbId) {
+            event.preventDefault();
+            isResponded = false;
+
+            const customerName = document.getElementById(`customer-${formId}`).value;
+            const phone = document.getElementById(`phone-${formId}`).value;
+            const pickup = document.getElementById(`pickup-${formId}`).value;
+            const detail = document.getElementById(`detail-${formId}`).value;
+
+            const btn = event.target.querySelector('button[type="submit"]');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="animate-pulse">送信中...</span>';
+            btn.disabled = true;
+
+            try {
+                // 1. Create Inquiry
+                const inquiryRes = await fetch(`${API_BASE}/inquiries`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customer_name: customerName,
+                        phone_number: phone,
+                        pickup_location: pickup,
+                        detail: detail
+                    })
+                });
+                
+                if (!inquiryRes.ok) throw new Error("Inquiry creation failed");
+                const inquiryData = await inquiryRes.json();
+                
+                // 2. Dispatch Inquiry to Partner
+                const dispatchRes = await fetch(`${API_BASE}/inquiries/${inquiryData.id}/dispatch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ partner_id: dbId })
+                });
+
+                if (!dispatchRes.ok) throw new Error("Dispatch failed");
+
+                // UI Updates after success
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                toggleAccordion(formId, partnerName, dbId);
+
+                document.getElementById(`card-${formId}`).style.borderColor = "#4ade80";
+                setTimeout(() => { document.getElementById(`card-${formId}`).style.borderColor = ""; }, 1000);
+
+                appendChatMessage(customerName, phone, detail, inquiryData.id, formId);
+
+                document.getElementById('dashboardFooter').innerHTML = `
+                    <span class="text-gray-400 font-normal text-xs">ステータス: </span><span class="text-blue-600 font-bold">先方へ連絡依頼済み（完了確認待ち: ${inquiryData.id}）</span>
+                `;
+
+                if (reminderTimeout) clearTimeout(reminderTimeout);
+                reminderTimeout = setTimeout(() => {
+                    if (!isResponded) {
+                        sendReminder(customerName, formId);
+                    }
+                }, 10000); // 10 seconds for demo
+
+            } catch (err) {
+                console.error(err);
+                alert("送信に失敗しました");
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+
+        function appendChatMessage(customerName, phone, detail, inquiryId, formId) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageId = Date.now();
+            const timeStr = `${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+
+            const msgHTML = `
+                <div class="flex mb-5 opacity-0 transition-all duration-500 translate-y-4" id="msg-${messageId}">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold mr-2 text-xs shadow-md shrink-0 border border-white/20">要受付</div>
+                    <div class="chat-bubble left bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[90%] shadow-md border border-gray-100">
+                        <div class="bg-blue-600 text-white px-3 py-2 text-xs font-bold flex justify-between items-center">
+                            <span>📞 お客様への連絡依頼</span>
+                        </div>
+                        <div class="p-3">
+                            <p class="text-[12px] text-gray-600 mb-2 leading-relaxed">次のお客様へお電話していただき、内容の調整をお願いします。</p>
+                            
+                            <div class="bg-gray-50 border border-gray-100 rounded p-2 mb-3 text-[13px] shadow-inner">
+                                <p class="font-bold text-gray-800 mb-1 border-b pb-1">${customerName}</p>
+                                <p class="text-blue-600 font-bold mb-2">☎️ ${phone}</p>
+                                <div class="text-xs text-gray-700 font-medium">
+                                    👉 <span class="text-gray-500 font-normal">依頼内容:</span><br>
+                                    ${detail}
+                                </div>
+                            </div>
+                            
+                            <p class="text-[10px] text-gray-400 mb-2 text-center">※お客様への連絡が終わりましたら、下のボタンを押して報告してください。</p>
+
+                            <div class="flex" id="buttons-${messageId}">
+                                <button onclick="markAsContacted(${messageId}, '${formId}', '${inquiryId}')" class="w-full bg-[#06C755] text-white font-bold py-3.5 rounded-xl text-sm hover:bg-green-600 transition shadow-lg border border-green-600 flex justify-center items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    連絡完了として報告
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-[9px] text-white/80 self-end ml-1 mb-1 whitespace-nowrap">${timeStr}</div>
+                </div>
+            `;
+
+            chatContainer.insertAdjacentHTML('beforeend', msgHTML);
+
+            setTimeout(() => {
+                const newMsg = document.getElementById(`msg-${messageId}`);
+                newMsg.classList.remove('opacity-0', 'translate-y-4');
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 50);
+        }
+
+        async function markAsContacted(msgId, formId, inquiryId) {
+            isResponded = true;
+            if (reminderTimeout) clearTimeout(reminderTimeout);
+
+            const btnGroup = document.getElementById(`buttons-${msgId}`);
+            if (btnGroup) {
+                const btn = btnGroup.querySelector('button');
+                btn.innerHTML = '<span class="animate-pulse">報告中...</span>';
+                btn.disabled = true;
+            }
+
+            try {
+                // Call complete API
+                const completeRes = await fetch(`${API_BASE}/inquiries/${inquiryId}/complete`, {
+                    method: 'POST'
+                });
+                if (!completeRes.ok) throw new Error("Complete API failed");
+
+                if (btnGroup) {
+                    const btn = btnGroup.querySelector('button');
+                    btn.innerHTML = '✔ 報告済み';
+                    btn.className = 'w-full bg-gray-200 text-gray-500 font-bold py-3.5 rounded-xl text-sm transition shadow-inner border border-gray-300 cursor-not-allowed';
+                }
+
+                const chatContainer = document.getElementById('chatContainer');
+                const timeStr = `${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+
+                const replyHTML = `
+                    <div class="flex flex-row-reverse mb-3 mt-1 opacity-0 transition-opacity duration-300" id="reply-${Date.now()}">
+                        <div class="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white font-bold ml-2 text-xs shadow-md shrink-0">担当者</div>
+                        <div class="chat-bubble right bg-[#06C755] text-white rounded-xl rounded-tr-sm p-3 max-w-[70%] shadow-sm text-sm">
+                            お客様への連絡、完了しました！
+                        </div>
+                        <div class="text-[9px] text-white/80 self-end mr-1 mb-1 text-right">既読1<br>${timeStr}</div>
+                    </div>
+                `;
+                chatContainer.insertAdjacentHTML('beforeend', replyHTML);
+
+                setTimeout(() => {
+                    chatContainer.lastElementChild.classList.remove('opacity-0');
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, 50);
+
+                // UI update PC dashboard
+                const alertEl = document.getElementById(`alert-${formId}`);
+                if (alertEl) alertEl.classList.add('hidden');
+                
+                const cardEl = document.getElementById(`card-${formId}`);
+                if (cardEl) {
+                    cardEl.classList.remove('border-red-300', 'bg-red-50');
+                    cardEl.classList.add('border-green-300', 'bg-green-50');
+                    setTimeout(() => {
+                        cardEl.classList.remove('border-green-300', 'bg-green-50');
+                    }, 2000);
+                }
+
+                document.getElementById('dashboardFooter').innerHTML = `
+                    <span class="text-gray-400 font-normal text-xs">ステータス: </span><span class="text-green-600 font-bold">✅ 連絡完了の報告を受け取りました！</span>
+                `;
+
+            } catch (err) {
+                console.error(err);
+                alert("完了報告に失敗しました。");
+                if (btnGroup) {
+                    const btn = btnGroup.querySelector('button');
+                    btn.innerHTML = '連絡完了として報告';
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        function sendReminder(customerName, formId) {
+            const chatContainer = document.getElementById('chatContainer');
+            const timeStr = `${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+
+            const reminderHTML = `
+                <div class="flex mb-4 opacity-0 transition-all duration-500 translate-y-2" id="reminder-${Date.now()}">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold mr-2 text-xs shadow-md shrink-0 border border-white/20">要受付</div>
+                    <div class="chat-bubble left bg-yellow-50 rounded-xl rounded-tl-sm overflow-hidden max-w-[85%] shadow-md border-l-4 border-yellow-500">
+                        <div class="p-3">
+                            <p class="font-bold text-yellow-700 text-xs mb-1">⚠️ [自動確認] 顧客への連絡はお済みでしょうか？</p>
+                            <p class="text-[11px] text-gray-600">
+                                お疲れ様です。先ほどご依頼した <strong>${customerName}</strong> 様への連絡について、まだ報告の確認がとれておりません。<br><br>
+                                お忙しいところ恐縮ですが、連絡が完了しましたら元メッセージの「連絡完了として報告」ボタンを押してください！
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-[9px] text-white/80 self-end ml-1 mb-1 whitespace-nowrap">${timeStr}</div>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', reminderHTML);
+
+            setTimeout(() => {
+                chatContainer.lastElementChild.classList.remove('opacity-0', 'translate-y-2');
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 50);
+
+            const alertEl = document.getElementById(`alert-${formId}`);
+            if (alertEl) alertEl.classList.remove('hidden');
+
+            const cardEl = document.getElementById(`card-${formId}`);
+            if (cardEl) cardEl.classList.add('border-red-300', 'bg-red-50');
+        }
+
+        // ==========================
+        // 協力会社追加モーダルの処理 (Post API)
+        // ==========================
+        function openAddPartnerModal() {
+            document.getElementById('addPartnerModal').classList.remove('hidden');
+            document.getElementById('newPartnerName').focus();
+        }
+
+        function closeAddPartnerModal() {
+            document.getElementById('addPartnerModal').classList.add('hidden');
+            document.getElementById('newPartnerName').value = '';
+            document.getElementById('newPartnerArea').value = '';
+            document.getElementById('newPartnerStaff').value = '';
+        }
+
+        async function submitNewPartner(event) {
+            event.preventDefault();
+            const name = document.getElementById('newPartnerName').value;
+            const area = document.getElementById('newPartnerArea').value;
+            const btn = event.target.querySelector('button[type="submit"]');
+            btn.innerHTML = '追加中...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_BASE}/partners`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: `${name} (${area})`,
+                        icon_emoji: '🆕'
+                    })
+                });
+                
+                if (!res.ok) throw new Error("Failed to add partner");
+                
+                // Refresh partner list
+                await fetchPartners();
+                closeAddPartnerModal();
+
+            } catch (err) {
+                console.error(err);
+                alert("追加に失敗しました");
+            } finally {
+                btn.innerHTML = '追加する';
+                btn.disabled = false;
+            }
+        }
+    </script>
+    <style>
+        .line-green {
+            background-color: #06C755;
+        }
+
+        .line-bg {
+            background-color: #849ebf;
+        }
+
+        .chat-bubble {
+            position: relative;
+        }
+
+        .chat-bubble.left::before {
+            content: "";
+            position: absolute;
+            top: 10px;
+            left: -8px;
+            border: 8px solid transparent;
+            border-right-color: white;
+            border-left: 0;
+            border-top: 0;
+            margin-top: -4px;
+        }
+
+        .chat-bubble.right::before {
+            content: "";
+            position: absolute;
+            top: 10px;
+            right: -8px;
+            border: 8px solid transparent;
+            border-left-color: #06C755;
+            border-right: 0;
+            border-top: 0;
+            margin-top: -4px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .accordion-content {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .accordion-content.open {
+            max-height: 500px;
+            opacity: 1;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        .partner-card.active {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
+        }
+
+        /* Modal Transition */
+        #addPartnerModal {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        #addPartnerModal>div {
+            transition: transform 0.3s ease-in-out;
+            transform: scale(0.95);
+        }
+
+        #addPartnerModal:not(.hidden)>div {
+            transform: scale(1);
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 h-screen flex flex-col items-center p-4 font-sans text-gray-800">
+
+    <div class="w-full max-w-5xl text-center mb-6 text-white">
+        <h1 class="text-3xl font-bold mb-2">🏢 協力会社への顧客連絡依頼システム (ワンタップ報告版)</h1>
+        <p class="text-gray-300">お客様へ連絡するよう協力会社へ指示を出し、完了したらボタン一つで報告してもらうシンプルなフローです。</p>
+    </div>
+
+    <div class="max-w-6xl w-full flex flex-col md:flex-row gap-8 justify-center items-center">
+
+        <!-- =======================
+             左側：受付窓口（要カーゴ）ダッシュボード
+             ======================= -->
+        <div
+            class="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col relative w-full md:w-[600px] h-[750px]">
+            <!-- ヘッダー -->
+            <div class="bg-slate-800 text-white p-4 shadow-md z-10 flex justify-between items-center">
+                <h2 class="font-bold text-lg flex items-center gap-2">
+                    💻 顧客対応コントロールセンター
+                </h2>
+                <div class="text-xs bg-green-500/20 text-green-300 px-3 py-1 rounded-full border border-green-500/50">
+                    LINE連携 稼働中
+                </div>
+            </div>
+
+            <!-- メインエリア -->
+            <div class="flex-1 bg-gray-50 p-4 overflow-y-auto relative">
+                <div class="mb-4 flex justify-between items-end border-b pb-2">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg mb-1">連携先 協力会社一覧</h3>
+                        <p class="text-xs text-gray-500">顧客への連絡を依頼する拠点を選択してください。</p>
+                    </div>
+                    <button onclick="openAddPartnerModal()"
+                        class="bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 text-xs font-bold py-1.5 px-3 rounded flex items-center gap-1 transition shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        新規協力会社の追加
+                    </button>
+                </div>
+
+                <div id="partnerList" class="space-y-4">
+                    <div class="text-center text-gray-500 text-sm py-4" id="loadingPartners">
+                        <svg class="animate-spin h-5 w-5 mx-auto mb-2 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        協力会社を読み込み中...
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="bg-white p-3 border-t text-sm font-bold text-gray-700" id="dashboardFooter">
+                <span class="text-gray-400 font-normal text-xs">ステータス: </span>待機中
+            </div>
+
+            <!-- =======================
+                 協力会社 追加モーダル
+                 ======================= -->
+            <div id="addPartnerModal"
+                class="hidden absolute inset-0 bg-slate-800/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col">
+                    <div class="bg-gray-50 border-b px-4 py-3 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
+                            <span class="bg-indigo-100 text-indigo-600 p-1 rounded-md"><svg class="w-4 h-4" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z">
+                                    </path>
+                                </svg></span>
+                            新規協力会社の追加
+                        </h3>
+                        <button onclick="closeAddPartnerModal()" class="text-gray-400 hover:text-gray-600 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <form onsubmit="submitNewPartner(event)" class="p-4 space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">会社名 <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" id="newPartnerName" required
+                                class="w-full text-sm border-gray-300 rounded-md p-2 border focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="例: サンプル運輸株式会社">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">担当エリア <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" id="newPartnerArea" required
+                                class="w-full text-sm border-gray-300 rounded-md p-2 border focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="例: 関西エリア">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">所属スタッフ数</label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="newPartnerStaff"
+                                    class="w-24 text-sm border-gray-300 rounded-md p-2 border focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="0" min="0">
+                                <span class="text-sm text-gray-500">名</span>
+                            </div>
+                        </div>
+                        <div class="pt-4 flex gap-2">
+                            <button type="button" onclick="closeAddPartnerModal()"
+                                class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 rounded-md transition text-sm">キャンセル</button>
+                            <button type="submit"
+                                class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-md shadow transition text-sm">追加する</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 矢印アイコン -->
+        <div class="hidden md:flex flex-col items-center justify-center text-white w-24">
+            <span class="text-xs font-bold mb-2 text-center" id="arrowText">API経由<br>自動送信</span>
+            <svg class="w-10 h-10 opacity-80 mt-1" id="arrowIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7">
+                </path>
+            </svg>
+        </div>
+
+        <!-- =======================
+             右側：協力会社のグループLINE
+             ======================= -->
+        <div
+            class="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border-8 border-gray-800 h-[750px] flex flex-col relative w-[360px] flex-shrink-0">
+            <!-- スマホステータスバー -->
+            <div class="bg-gray-800 text-white text-center py-2 text-[10px] font-bold flex justify-between px-6 z-20">
+                <span>9:41</span>
+                <div class="flex gap-1"><span>📶</span><span>🔋</span></div>
+            </div>
+
+            <!-- LINEチャットヘッダー -->
+            <div class="bg-[#273246] text-white flex items-center px-4 py-3 shadow-md z-10">
+                <span class="text-xl mr-3 cursor-pointer">〈</span>
+                <div class="flex-1">
+                    <h2 class="font-bold text-sm" id="lineHeaderTitle">📱 待機中...</h2>
+                    <p class="text-[10px] text-gray-300" id="lineHeaderSub">左の画面から送信してください</p>
+                </div>
+                <span class="text-xl cursor-pointer">≡</span>
+            </div>
+
+            <!-- LINEトークルーム背景 -->
+            <div class="line-bg flex-1 p-3 overflow-y-auto flex flex-col relative" id="chatContainer">
+                <div class="flex justify-center mb-4 mt-2">
+                    <span class="bg-black/20 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-sm">今日</span>
+                </div>
+            </div>
+
+            <!-- LINE入力エリア -->
+            <div class="bg-gray-100 p-2 border-t flex items-center gap-2 px-3 pb-5 z-10">
+                <div class="text-gray-500 text-2xl font-light">+</div>
+                <div
+                    class="flex-1 bg-white rounded-full h-8 px-3 flex items-center text-gray-400 border border-gray-200 text-sm">
+                    Aa</div>
+                <div class="text-gray-500 text-xl">☺</div>
+                <div class="text-gray-500 text-xl">🎙</div>
+            </div>
+
+            <!-- iOSホームバー -->
+            <div
+                class="absolute bottom-1.5 left-1/2 transform -translate-x-1/2 w-1/3 h-1 bg-gray-300 rounded-full z-20">
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentOpenId = null;
+        let reminderTimeout = null;
+        let isResponded = false;
+
+        function toggleAccordion(id, name) {
+            document.getElementById('lineHeaderTitle').innerText = `📱 [${name}] グループ`;
+            document.getElementById('lineHeaderSub').innerText = "配車担当者 他複数名";
+
+            const content = document.getElementById(`form-${id}`);
+            const arrow = document.getElementById(`arrow-${id}`);
+            const card = document.getElementById(`card-${id}`);
+
+            if (currentOpenId && currentOpenId !== id) {
+                const oldContent = document.getElementById(`form-${currentOpenId}`);
+                if (oldContent) {
+                    oldContent.classList.remove('open');
+                    document.getElementById(`arrow-${currentOpenId}`).classList.remove('rotate-180');
+                    document.getElementById(`card-${currentOpenId}`).classList.remove('active');
+                }
+            }
+
+            content.classList.toggle('open');
+            arrow.classList.toggle('rotate-180');
+            card.classList.toggle('active');
+
+            if (content.classList.contains('open')) {
+                const focusEl = document.getElementById(`customer-${id}`);
+                if (focusEl) focusEl.focus();
+            }
+
+            currentOpenId = content.classList.contains('open') ? id : null;
+        }
+
+        function sendToLine(event, id, partnerName) {
+            event.preventDefault();
+            isResponded = false;
+
+            const customerName = document.getElementById(`customer-${id}`).value;
+            const phone = document.getElementById(`phone-${id}`).value;
+            const trackingNo = document.getElementById(`tracking-${id}`).value;
+            const detail = document.getElementById(`detail-${id}`).value;
+
+            const btn = event.target.querySelector('button[type="submit"]');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="animate-pulse">送信中...</span>';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+
+                toggleAccordion(id, partnerName);
+
+                document.getElementById(`card-${id}`).style.borderColor = "#4ade80";
+                setTimeout(() => { document.getElementById(`card-${id}`).style.borderColor = ""; }, 1000);
+
+                const chatContainer = document.getElementById('chatContainer');
+                const messageId = Date.now();
+                const timeStr = `${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+
+                const msgHTML = `
+                    <div class="flex mb-5 opacity-0 transition-all duration-500 translate-y-4" id="msg-${messageId}">
+                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold mr-2 text-xs shadow-md shrink-0 border border-white/20">要受付</div>
+                        <div class="chat-bubble left bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[90%] shadow-md border border-gray-100">
+                            <div class="bg-blue-600 text-white px-3 py-2 text-xs font-bold flex justify-between items-center">
+                                <span>📞 お客様への連絡依頼</span>
+                            </div>
+                            <div class="p-3">
+                                <p class="text-[12px] text-gray-600 mb-2 leading-relaxed">次のお客様へお電話していただき、内容の調整をお願いします。</p>
+                                
+                                <div class="bg-gray-50 border border-gray-100 rounded p-2 mb-3 text-[13px] shadow-inner">
+                                    <p class="font-bold text-gray-800 mb-1 border-b pb-1">${customerName}</p>
+                                    <p class="text-blue-600 font-bold mb-2">☎️ ${phone}</p>
+                                    <div class="text-xs text-gray-700 font-medium">
+                                        👉 <span class="text-gray-500 font-normal">依頼内容:</span><br>
+                                        ${detail}
+                                    </div>
+                                </div>
+                                
+                                <p class="text-[10px] text-gray-400 mb-2 text-center">※お客様への連絡が終わりましたら、下のボタンを押して報告してください。</p>
+
+                                <div class="flex" id="buttons-${messageId}">
+                                    <button onclick="markAsContacted(${messageId}, '${id}')" class="w-full bg-[#06C755] text-white font-bold py-3.5 rounded-xl text-sm hover:bg-green-600 transition shadow-lg border border-green-600 flex justify-center items-center gap-2">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        連絡完了として報告
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-[9px] text-white/80 self-end ml-1 mb-1 whitespace-nowrap">${timeStr}</div>
+                    </div>
+                `;
+
+                chatContainer.insertAdjacentHTML('beforeend', msgHTML);
+
+                setTimeout(() => {
+                    const newMsg = document.getElementById(`msg-${messageId}`);
+                    newMsg.classList.remove('opacity-0', 'translate-y-4');
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, 50);
+
+                document.getElementById('dashboardFooter').innerHTML = `
+                    <span class="text-gray-400 font-normal text-xs">ステータス: </span><span class="text-blue-600 font-bold">先方へ連絡依頼済み（完了確認待ち）</span>
+                `;
+
+                if (reminderTimeout) clearTimeout(reminderTimeout);
+                reminderTimeout = setTimeout(() => {
+                    if (!isResponded) {
+                        sendReminder(customerName, id);
+                    }
+                }, 5000);
+
+            }, 600);
+        }
+
+        // 連絡完了報告の処理
+        function markAsContacted(msgId, partnerId) {
+            isResponded = true;
+            if (reminderTimeout) clearTimeout(reminderTimeout);
+
+            const btnGroup = document.getElementById(`buttons-${msgId}`);
+            if (btnGroup) {
+                const btn = btnGroup.querySelector('button');
+                btn.innerHTML = '✔ 報告済み';
+                btn.className = 'w-full bg-gray-200 text-gray-500 font-bold py-3.5 rounded-xl text-sm transition shadow-inner border border-gray-300 cursor-not-allowed';
+                btn.disabled = true;
+            }
+
+            const chatContainer = document.getElementById('chatContainer');
+            const timeStr = `${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+
+            const replyHTML = `
+                <div class="flex flex-row-reverse mb-3 mt-1 opacity-0 transition-opacity duration-300" id="reply-${Date.now()}">
+                    <div class="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white font-bold ml-2 text-xs shadow-md shrink-0">担当者</div>
+                    <div class="chat-bubble right bg-[#06C755] text-white rounded-xl rounded-tr-sm p-3 max-w-[70%] shadow-sm text-sm">
+                        お客様への連絡、完了しました！
+                    </div>
+                    <div class="text-[9px] text-white/80 self-end mr-1 mb-1 text-right">既読1<br>${timeStr}</div>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', replyHTML);
+
+            setTimeout(() => {
+                chatContainer.lastElementChild.classList.remove('opacity-0');
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 50);
+
+            // ==========================
+            // 要カーゴ(PC側)の表示更新
+            // ==========================
+            document.getElementById(`alert-${partnerId}`).classList.add('hidden');
+            document.getElementById(`card-${partnerId}`).classList.remove('border-red-300', 'bg-red-50');
+            document.getElementById(`card-${partnerId}`).classList.add('border-green-300', 'bg-green-50');
+
+            setTimeout(() => {
+                document.getElementById(`card-${partnerId}`).classList.remove('border-green-300', 'bg-green-50');
+            }, 2000);
+
+            document.getElementById('dashboardFooter').innerHTML = `
+                <span class="text-gray-400 font-normal text-xs">ステータス: </span><span class="text-green-600 font-bold">✅ 連絡完了の報告を受け取りました！</span>
+            `;
+        }
+
+        function sendReminder(customerName, partnerId) {
+            const chatContainer = document.getElementById('chatContainer');
+            const timeStr = `${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+
+            const reminderHTML = `
+                <div class="flex mb-4 opacity-0 transition-all duration-500 translate-y-2" id="reminder-${Date.now()}">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold mr-2 text-xs shadow-md shrink-0 border border-white/20">要受付</div>
+                    <div class="chat-bubble left bg-yellow-50 rounded-xl rounded-tl-sm overflow-hidden max-w-[85%] shadow-md border-l-4 border-yellow-500">
+                        <div class="p-3">
+                            <p class="font-bold text-yellow-700 text-xs mb-1">⚠️ [自動確認] 顧客への連絡はお済みでしょうか？</p>
+                            <p class="text-[11px] text-gray-600">
+                                お疲れ様です。先ほどご依頼した <strong>${customerName}</strong> 様への連絡について、まだ報告の確認がとれておりません。<br><br>
+                                お忙しいところ恐縮ですが、連絡が完了しましたら元メッセージの「連絡完了として報告」ボタンを押してください！
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-[9px] text-white/80 self-end ml-1 mb-1 whitespace-nowrap">${timeStr}</div>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', reminderHTML);
+
+            setTimeout(() => {
+                chatContainer.lastElementChild.classList.remove('opacity-0', 'translate-y-2');
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 50);
+
+            const alertEl = document.getElementById(`alert-${partnerId}`);
+            if (alertEl) alertEl.classList.remove('hidden');
+
+            const cardEl = document.getElementById(`card-${partnerId}`);
+            if (cardEl) cardEl.classList.add('border-red-300', 'bg-red-50');
+        }
+
+        // ==========================
+        // 協力会社追加モーダルの処理
+        // ==========================
+        function openAddPartnerModal() {
+            document.getElementById('addPartnerModal').classList.remove('hidden');
+            document.getElementById('newPartnerName').focus();
+        }
+
+        function closeAddPartnerModal() {
+            document.getElementById('addPartnerModal').classList.add('hidden');
+            document.getElementById('newPartnerName').value = '';
+            document.getElementById('newPartnerArea').value = '';
+            document.getElementById('newPartnerStaff').value = '';
+        }
+
+        function submitNewPartner(event) {
+            event.preventDefault();
+            const name = document.getElementById('newPartnerName').value;
+            const area = document.getElementById('newPartnerArea').value;
+            const staffCount = document.getElementById('newPartnerStaff').value || "0";
+
+            const newId = 'partner_' + Date.now();
+            const displayName = `${name} (${area})`;
+
+            const newCardHTML = `
+                <div class="bg-white border text-left border-gray-200 rounded-lg shadow-sm overflow-hidden partner-card transition-all opacity-0 scale-95 transform translate-y-2 duration-300" id="card-${newId}">
+                    <button onclick="toggleAccordion('${newId}', '${displayName}')" class="w-full px-4 py-4 flex justify-between items-center hover:bg-gray-50 transition">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-lg shadow-inner">
+                                🆕
+                            </div>
+                            <div class="text-left">
+                                <h4 class="font-bold text-gray-800 text-base">${name}</h4>
+                                <p class="text-[11px] text-gray-500">${area} / 登録スタッフ${staffCount}名</p>
+                            </div>
+                        </div>
+                        <div id="alert-${newId}" class="hidden flex items-center gap-1 text-red-500 text-xs font-bold bg-red-50 px-2 py-1 rounded">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            連絡未確認
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 transform transition-transform" id="arrow-${newId}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    
+                    <div id="form-${newId}" class="accordion-content bg-indigo-50/30 px-5 border-t border-gray-100">
+                        <form onsubmit="sendToLine(event, '${newId}', '${displayName}')" class="space-y-3 pb-2">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">顧客名</label>
+                                <input type="text" id="customer-${newId}" required class="w-full text-sm border-gray-300 rounded-md p-2 border focus:ring-indigo-500 focus:border-indigo-500" value="株式会社テスト様">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">電話番号</label>
+                                    <input type="text" id="phone-${newId}" required class="w-full text-sm border-gray-300 rounded-md p-2 border focus:ring-indigo-500 focus:border-indigo-500" value="090-0000-0000">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">受付番号（任意）</label>
+                                    <input type="text" id="tracking-${newId}" class="w-full text-sm border-gray-300 rounded-md p-2 border focus:ring-indigo-500 focus:border-indigo-500" placeholder="例: YK-2948-11">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">依頼内容</label>
+                                <input type="text" id="detail-${newId}" required class="w-full text-sm border-gray-300 rounded-md p-2 border focus:ring-indigo-500 focus:border-indigo-500" value="集荷時間の調整連絡をお願いします。">
+                            </div>
+                            <div class="pt-2">
+                                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg flex justify-center items-center gap-2 transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                                    連絡依頼をLINEで送信
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            const partnerList = document.getElementById('partnerList');
+            partnerList.insertAdjacentHTML('beforeend', newCardHTML);
+
+            // Animation for new card
+            setTimeout(() => {
+                const newCard = document.getElementById(`card-${newId}`);
+                newCard.classList.remove('opacity-0', 'scale-95', 'translate-y-2');
+            }, 50);
+
+            closeAddPartnerModal();
+        }
+    </script>
+</body>
+
+</html>

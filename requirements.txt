@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+python-dotenv
+line-bot-sdk
+psycopg2-binary
