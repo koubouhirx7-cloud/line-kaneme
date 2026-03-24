@@ -350,11 +350,33 @@
         window.lastInquiries = []; // store for re-rendering archive
         window.openGroups = new Set(); // store to keep accordion states open
 
+        // ==========================
+        // Auth & Auto Logout Logic
+        // ==========================
+        function checkAutoLogout() {
+            const LOGOUT_MS = 6 * 60 * 60 * 1000; // 6 hours
+            const loginTime = localStorage.getItem('hubcargo_login_time');
+            const now = Date.now();
+
+            if (!loginTime) {
+                localStorage.setItem('hubcargo_login_time', now.toString());
+            } else if (now - parseInt(loginTime) > LOGOUT_MS) {
+                alert("セキュリティ保護のため、自動的にログアウトしました。再度ログインしてください。");
+                localStorage.removeItem('hubcargo_login_time');
+                // Basic認証のキャッシュを上書きしてログアウトさせる特殊URL
+                window.location.href = 'https://logout@' + window.location.host + '/admin.html';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            checkAutoLogout();
             fetchPartners();
             fetchInquiries();
             // Start basic polling for inbox (every 10s)
-            pollingInterval = setInterval(fetchInquiries, 10000);
+            pollingInterval = setInterval(() => {
+                checkAutoLogout();
+                fetchInquiries();
+            }, 10000);
         });
 
         // ==========================
