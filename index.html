@@ -231,11 +231,11 @@
                                 <div><label class="block text-[10px] font-bold mb-1">電話番号</label><input type="text"
                                         id="df-phone" required class="w-full text-xs border rounded p-2"
                                         value="090-1234-5678"></div>
-                                <div><label class="block text-[10px] font-bold mb-1">引取先</label><input type="text"
+                                <div><label class="block text-[10px] font-bold mb-1">ご住所</label><input type="text"
                                         id="df-from" required class="w-full text-xs border rounded p-2" value="東京都千代田区">
                                 </div>
-                                <div><label class="block text-[10px] font-bold mb-1">納品先</label><input type="text"
-                                        id="df-to" required class="w-full text-xs border rounded p-2" value="千葉県柏市">
+                                <div><label class="block text-[10px] font-bold mb-1">お荷物番号</label><input type="text"
+                                        id="df-to" required class="w-full text-xs border rounded p-2" value="1234-5678-9012">
                                 </div>
                                 <div><label class="block text-[10px] font-bold mb-1">お問い合わせ内容</label><textarea
                                         id="df-detail" rows="2"
@@ -717,8 +717,8 @@
                             <span class="font-bold text-sm text-gray-800">${req.customer_name} 様 <span class="text-gray-400 text-[10px] ml-1">${req.id}</span></span>
                             <div>${badge}</div>
                         </div>
-                        <p class="text-[10px] text-gray-500 truncate mb-1">引取: ${req.pickup_location}</p>
-                        <p class="text-[10px] text-gray-500 truncate mb-2">納品: ${req.delivery_location}</p>
+                        <p class="text-[10px] text-gray-500 truncate mb-1">ご住所: ${req.pickup_location}</p>
+                        <p class="text-[10px] text-gray-500 truncate mb-2">お荷物番号: ${req.delivery_location}</p>
                         <p class="text-[11px] text-gray-600 truncate mb-2 bg-gray-50 p-1 rounded">内容: ${req.detail}</p>
                         ${btnState}
                     </div>
@@ -871,7 +871,7 @@
 
             document.getElementById('pass-name').innerText = inquiry.customer_name;
             document.getElementById('pass-phone').innerText = inquiry.phone_number;
-            document.getElementById('pass-detail').innerText = `引取: ${inquiry.pickup_location}\n納品: ${inquiry.delivery_location}\n詳細: ${inquiry.detail}`;
+            document.getElementById('pass-detail').innerText = `ご住所: ${inquiry.pickup_location}\nお荷物番号: ${inquiry.delivery_location}\n詳細: ${inquiry.detail}`;
 
             switchTab('dispatch');
             document.getElementById('dispatch-empty').classList.add('hidden');

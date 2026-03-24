@@ -158,7 +158,7 @@ def send_line_push_message(to_id: str, inquiry: models.Inquiry, partner: models.
                                 "layout": "baseline",
                                 "spacing": "sm",
                                 "contents": [
-                                    {"type": "text", "text": "引取:", "color": "#777777", "size": "sm", "flex": 1},
+                                    {"type": "text", "text": "ご住所:", "color": "#777777", "size": "sm", "flex": 2},
                                     {"type": "text", "text": f"{inquiry.pickup_location}", "wrap": True, "color": "#111111", "size": "sm", "flex": 5}
                                 ]
                             },
@@ -167,7 +167,7 @@ def send_line_push_message(to_id: str, inquiry: models.Inquiry, partner: models.
                                 "layout": "baseline",
                                 "spacing": "sm",
                                 "contents": [
-                                    {"type": "text", "text": "納品:", "color": "#777777", "size": "sm", "flex": 1},
+                                    {"type": "text", "text": "お荷物番号:", "color": "#777777", "size": "sm", "flex": 2},
                                     {"type": "text", "text": f"{inquiry.delivery_location}", "wrap": True, "color": "#111111", "size": "sm", "flex": 5}
                                 ]
                             },
