@@ -84,6 +84,16 @@ def get_inquiries(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
     inquiries = db.query(models.Inquiry).order_by(models.Inquiry.created_at.desc()).offset(skip).limit(limit).all()
     return inquiries
 
+@app.delete("/api/inquiries/{inquiry_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_inquiry(inquiry_id: str, db: Session = Depends(get_db)):
+    inquiry = db.query(models.Inquiry).filter(models.Inquiry.id == inquiry_id).first()
+    if not inquiry:
+        raise HTTPException(status_code=404, detail="Inquiry not found")
+    
+    db.delete(inquiry)
+    db.commit()
+    return {"ok": True}
+
 @app.post("/api/inquiries/{inquiry_id}/dispatch", response_model=schemas.InquiryResponse)
 def dispatch_inquiry(inquiry_id: str, request_data: schemas.DispatchRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     inquiry = db.query(models.Inquiry).filter(models.Inquiry.id == inquiry_id).first()

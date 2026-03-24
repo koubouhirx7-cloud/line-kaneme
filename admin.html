@@ -242,7 +242,7 @@
                     <div id="screen-completed" class="fade-screen screen-hidden flex flex-col flex-1 w-full bg-gray-50 h-full overflow-hidden">
                         <div class="bg-emerald-600 text-white p-3 shadow-md flex items-center justify-between z-10 shrink-0">
                             <h2 class="font-bold text-sm">✅ 完了済みの案件</h2>
-                            <select id="archive-grouping" onchange="renderCompletedGroups()" class="bg-emerald-700 text-white text-xs border border-emerald-500 rounded p-1 outline-none font-medium cursor-pointer focus:ring-1 focus:ring-emerald-400">
+                            <select id="archive-grouping" onchange="window.openGroups.clear(); renderCompletedGroups()" class="bg-emerald-700 text-white text-xs border border-emerald-500 rounded p-1 outline-none font-medium cursor-pointer focus:ring-1 focus:ring-emerald-400">
                                 <option value="month">月別</option>
                                 <option value="week">週別</option>
                                 <option value="year">年別</option>
@@ -348,6 +348,7 @@
         let allPartners = [];
         let pollingInterval = null;
         window.lastInquiries = []; // store for re-rendering archive
+        window.openGroups = new Set(); // store to keep accordion states open
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchPartners();
@@ -508,9 +509,37 @@
             return `${date.getUTCFullYear()}年 第${weekNo}週`;
         }
 
+        function toggleGroup(safeId) {
+            const isHidden = document.getElementById(`group-${safeId}`).classList.toggle('hidden');
+            document.getElementById(`icon-${safeId}`).classList.toggle('rotate-180');
+            if (isHidden) {
+                window.openGroups.delete(safeId);
+            } else {
+                window.openGroups.add(safeId);
+            }
+        }
+
+        async function deleteInquiryTask(id) {
+            if (!confirm(`本当に受付番号 ${id} の記録を削除しますか？\n（この操作は取り消せません）`)) return;
+            try {
+                const res = await fetch(`${API_BASE}/inquiries/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    window.lastInquiries = window.lastInquiries.filter(i => i.id !== id);
+                    renderCompletedGroups();
+                } else {
+                    alert('削除に失敗しました。');
+                }
+            } catch(e) {
+                console.error(e);
+                alert('削除中に通信エラーが発生しました。');
+            }
+        }
+
         function renderCompletedGroups() {
             const completedList = document.getElementById('completedList');
             if (!completedList) return;
+            if (!window.openGroups) window.openGroups = new Set();
+
             const inquiries = window.lastInquiries || [];
             const completedInquiries = inquiries.filter(req => req.status === 'completed');
             
@@ -532,12 +561,17 @@
 
                 if (!groups[groupKey]) groups[groupKey] = [];
                 
-                const badge = `<span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">完了</span>`;
+                const badge = `<span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1 flex-shrink-0">完了</span>`;
                 const cardHtml = `
-                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-3 mb-3">
-                        <div class="flex justify-between border-b pb-1 mb-2">
-                            <span class="font-bold text-sm text-gray-800">${req.customer_name} 様 <span class="text-gray-400 text-[10px] ml-1">${req.id}</span></span>
-                            <div>${badge}</div>
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-3 mb-3 relative group">
+                        <div class="flex justify-between items-start border-b pb-1 mb-2">
+                            <span class="font-bold text-sm text-gray-800 pr-2">${req.customer_name} 様 <span class="text-gray-400 text-[10px] ml-1">${req.id}</span></span>
+                            <div class="flex items-center gap-2">
+                                ${badge}
+                                <button onclick="deleteInquiryTask('${req.id}')" title="この記録を削除" class="text-gray-300 hover:text-red-500 hover:bg-red-50 p-1 rounded transition opacity-50 hover:opacity-100">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
                         </div>
                         <p class="text-[10px] text-gray-500 truncate mb-1">ご住所: ${req.pickup_location}</p>
                         <p class="text-[10px] text-gray-500 truncate mb-2">お荷物番号: ${req.delivery_location}</p>
@@ -553,13 +587,17 @@
             let html = '';
             sortedKeys.forEach(key => {
                 const safeId = key.replace(/[^\w-]/g, '-');
+                const isOpen = window.openGroups.has(safeId);
+                const hiddenClass = isOpen ? '' : 'hidden';
+                const rotateClass = isOpen ? 'rotate-180' : 'rotate-0';
+
                 html += `
                     <div class="mb-4">
-                        <button onclick="document.getElementById('group-${safeId}').classList.toggle('hidden'); document.getElementById('icon-${safeId}').classList.toggle('rotate-180');" class="w-full flex justify-between items-center bg-emerald-50 px-3 py-2 rounded shadow-sm text-sm font-bold text-emerald-800 mb-2 transition border border-emerald-100">
+                        <button onclick="toggleGroup('${safeId}')" class="w-full flex justify-between items-center bg-emerald-50 px-3 py-2 rounded shadow-sm text-sm font-bold text-emerald-800 mb-2 transition border border-emerald-100 outline-none">
                             <span>📅 ${key} <span class="text-xs font-normal ml-1">(${groups[key].length}件)</span></span>
-                            <svg id="icon-${safeId}" class="w-4 h-4 transition-transform duration-200 transform text-emerald-600 rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            <svg id="icon-${safeId}" class="w-4 h-4 transition-transform duration-200 transform text-emerald-600 ${rotateClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
-                        <div id="group-${safeId}" class="space-y-3 transition-all duration-300">
+                        <div id="group-${safeId}" class="space-y-3 transition-all duration-300 ${hiddenClass}">
                             ${groups[key].join('')}
                         </div>
                     </div>
