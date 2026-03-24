@@ -136,24 +136,30 @@ def send_line_push_message(to_id: str, inquiry: models.Inquiry, partner: models.
                     },
                     {
                         "type": "text",
-                        "text": f"☎ {inquiry.phone_number}",
+                        "text": f"☎ {inquiry.phone_number} (タップで発信)",
                         "color": "#2764E5",
                         "weight": "bold",
-                        "size": "lg"
+                        "size": "lg",
+                        "margin": "md",
+                        "action": {
+                            "type": "uri",
+                            "label": "電話をかける",
+                            "uri": f"tel:{inquiry.phone_number.replace('-', '')}"
+                        }
                     },
                     {
                         "type": "box",
                         "layout": "vertical",
                         "margin": "lg",
-                        "spacing": "sm",
+                        "spacing": "md",
                         "contents": [
                             {
                                 "type": "box",
                                 "layout": "baseline",
                                 "spacing": "sm",
                                 "contents": [
-                                    {"type": "text", "text": "引取:", "color": "#aaaaaa", "size": "sm", "flex": 1},
-                                    {"type": "text", "text": f"{inquiry.pickup_location}", "wrap": True, "color": "#666666", "size": "sm", "flex": 5}
+                                    {"type": "text", "text": "引取:", "color": "#777777", "size": "sm", "flex": 1},
+                                    {"type": "text", "text": f"{inquiry.pickup_location}", "wrap": True, "color": "#111111", "size": "sm", "flex": 5}
                                 ]
                             },
                             {
@@ -161,23 +167,23 @@ def send_line_push_message(to_id: str, inquiry: models.Inquiry, partner: models.
                                 "layout": "baseline",
                                 "spacing": "sm",
                                 "contents": [
-                                    {"type": "text", "text": "納品:", "color": "#aaaaaa", "size": "sm", "flex": 1},
-                                    {"type": "text", "text": f"{inquiry.delivery_location}", "wrap": True, "color": "#666666", "size": "sm", "flex": 5}
+                                    {"type": "text", "text": "納品:", "color": "#777777", "size": "sm", "flex": 1},
+                                    {"type": "text", "text": f"{inquiry.delivery_location}", "wrap": True, "color": "#111111", "size": "sm", "flex": 5}
                                 ]
                             },
                             {
                                 "type": "text",
                                 "text": f"詳細:\n{inquiry.detail}",
                                 "wrap": True,
-                                "color": "#666666",
+                                "color": "#111111",
                                 "size": "sm",
                                 "margin": "lg"
                             }
                         ],
-                        "backgroundColor": "#f8f9fa",
-                        "paddingAll": "12px",
+                        "backgroundColor": "#f4f6f9",
+                        "paddingAll": "16px",
                         "cornerRadius": "8px",
-                        "borderColor": "#e9ecef",
+                        "borderColor": "#d9e2ec",
                         "borderWidth": "1px"
                     }
                 ],
