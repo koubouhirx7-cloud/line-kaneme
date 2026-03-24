@@ -302,16 +302,75 @@ def handle_message(event):
                     inquiry.status = "completed"
                     db.commit()
                     
-                    # Reply back via Messaging API
-                    reply_text = f"【報告受理】\n受付番号 {inquiry_id} (顧客: {inquiry.customer_name} 様) の連絡完了報告を受け付けました！ありがとうございました。"
+                    # Reply back via Messaging API using FlexMessage
+                    reply_flex_dict = {
+                        "type": "bubble",
+                        "size": "kilo",
+                        "header": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": [
+                                {
+                                    "type": "text",
+                                    "text": "✅ 報告受理完了",
+                                    "color": "#ffffff",
+                                    "weight": "bold",
+                                    "size": "md"
+                                }
+                            ],
+                            "backgroundColor": "#29a329",
+                            "paddingTop": "12px",
+                            "paddingBottom": "12px"
+                        },
+                        "body": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "spacing": "md",
+                            "contents": [
+                                {
+                                    "type": "text",
+                                    "text": "連絡完了報告を受け付けました！\nありがとうございます。",
+                                    "weight": "bold",
+                                    "size": "md",
+                                    "wrap": True,
+                                    "color": "#111111"
+                                },
+                                {
+                                    "type": "box",
+                                    "layout": "vertical",
+                                    "spacing": "sm",
+                                    "margin": "lg",
+                                    "contents": [
+                                        {
+                                            "type": "text",
+                                            "text": f"受付番号: {inquiry_id}",
+                                            "size": "sm",
+                                            "color": "#666666"
+                                        },
+                                        {
+                                            "type": "text",
+                                            "text": f"顧客名: {inquiry.customer_name} 様",
+                                            "size": "sm",
+                                            "color": "#666666",
+                                            "wrap": True
+                                        }
+                                    ],
+                                    "backgroundColor": "#f4f6f9",
+                                    "paddingAll": "12px",
+                                    "cornerRadius": "8px"
+                                }
+                            ],
+                            "paddingAll": "20px"
+                        }
+                    }
                     
-                    from linebot.v3.messaging import ReplyMessageRequest
+                    from linebot.v3.messaging import ReplyMessageRequest, FlexMessage, FlexContainer
                     with ApiClient(configuration) as api_client:
                         line_bot_api = MessagingApi(api_client)
                         line_bot_api.reply_message(
                             ReplyMessageRequest(
                                 reply_token=event.reply_token,
-                                messages=[TextMessage(text=reply_text)]
+                                messages=[FlexMessage(alt_text=f"✅ 報告受理: {inquiry_id}", contents=FlexContainer.from_dict(reply_flex_dict))]
                             )
                         )
             except Exception as e:
