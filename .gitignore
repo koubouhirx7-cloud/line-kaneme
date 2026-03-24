@@ -1,6 +1,9 @@
 .env
+backend/.env
 .venv/
+backend/.venv/
 __pycache__/
 *.pyc
 hubcargo.db
+backend/hubcargo.db
 .DS_Store

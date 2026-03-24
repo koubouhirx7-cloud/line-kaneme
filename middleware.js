@@ -1,32 +1,40 @@
 export const config = {
-  matcher: '/admin.html',
+  // admin.html と API エンドポイント両方を保護
+  matcher: ['/admin.html', '/api/:path*'],
 };
 
 export default function middleware(request) {
+  // 環境変数からID/パスワードを取得 (Vercelダッシュボードで設定)
+  const ADMIN_USER = process.env.ADMIN_USER;
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+  // 環境変数が未設定の場合はアクセスを全拒否（フェイルセーフ）
+  if (!ADMIN_USER || !ADMIN_PASSWORD) {
+    return new Response('サーバー設定エラー: 環境変数が未設定です。', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+
   const basicAuth = request.headers.get('authorization');
 
   if (basicAuth) {
     const authValue = basicAuth.split(' ')[1];
-    
-    // atob is available in Vercel Edge Runtime
     const decoded = atob(authValue);
-    const [user, pwd] = decoded.split(':');
+    const [user, ...rest] = decoded.split(':');
+    const pwd = rest.join(':'); // パスワード中のコロンを正しく扱う
 
-    // デフォルトのログイン情報
-    // ID: admin
-    // パスワード: hubcargo2026
-    if (user === 'admin' && pwd === 'hubcargo2026') {
-      // 成功時は何も返さない（そのままページを表示する）
-      return;
+    if (user === ADMIN_USER && pwd === ADMIN_PASSWORD) {
+      return; // 認証成功
     }
   }
 
-  // 認証失敗時、または初回アクセス時は 401 Unauthorized を返す
+  // 認証失敗時 or 未認証アクセス → 401
   return new Response('認証が必要です。正しいIDとパスワードを入力してください。', {
     status: 401,
     headers: {
-      'WWW-Authenticate': 'Basic realm="Secure Admin Dashboard"',
-      'Content-Type': 'text/plain; charset=utf-8'
+      'WWW-Authenticate': 'Basic realm="HubCargo Admin"',
+      'Content-Type': 'text/plain; charset=utf-8',
     },
   });
 }

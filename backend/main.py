@@ -41,13 +41,20 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="HubCargo Delivery API")
 
-# Setup CORS to allow UI components to connect
+# Setup CORS - 本番環境のURLのみ許可
+ALLOWED_ORIGINS = [
+    "https://line-kaneme.vercel.app",  # 本番Vercel
+    "http://localhost:3000",            # ローカル開発
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For development, allow all
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 @app.get("/")
@@ -461,9 +468,15 @@ def handle_message(event):
                 )
 
 from fastapi.responses import JSONResponse
-import traceback
+import logging
+
+logger = logging.getLogger("hubcargo")
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    err = traceback.format_exc()
-    return JSONResponse(status_code=500, content={"message": "Internal Crash", "trace": err})
+    # スタックトレースはサーバーログにのみ記録し、レスポンスには含めない
+    logger.error(f"Unhandled exception on {request.method} {request.url}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"message": "内部エラーが発生しました。しばらく待ってから再試行してください。"}
+    )
