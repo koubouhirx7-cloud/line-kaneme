@@ -25,7 +25,8 @@ export default function middleware(request) {
     const pwd = rest.join(':'); // パスワード中のコロンを正しく扱う
 
     if (user === ADMIN_USER && pwd === ADMIN_PASSWORD) {
-      return; // 認証成功
+      // 認証成功時、本来のページへルーティングを継続させる (Vercelの仕様)
+      return new Response(null, { headers: { 'x-middleware-next': '1' } });
     }
   }
 
