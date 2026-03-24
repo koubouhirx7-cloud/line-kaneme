@@ -242,6 +242,11 @@
                     <div id="screen-completed" class="fade-screen screen-hidden flex flex-col flex-1 w-full bg-gray-50 h-full overflow-hidden">
                         <div class="bg-emerald-600 text-white p-3 shadow-md flex items-center justify-between z-10 shrink-0">
                             <h2 class="font-bold text-sm">✅ 完了済みの案件</h2>
+                            <select id="archive-grouping" onchange="renderCompletedGroups()" class="bg-emerald-700 text-white text-xs border border-emerald-500 rounded p-1 outline-none font-medium cursor-pointer focus:ring-1 focus:ring-emerald-400">
+                                <option value="month">月別</option>
+                                <option value="week">週別</option>
+                                <option value="year">年別</option>
+                            </select>
                         </div>
                         <div id="completedList" class="flex-1 p-3 overflow-y-auto pb-20"></div>
                     </div>
@@ -342,6 +347,7 @@
         let currentData = null; // Currently selected inquiry for dispatch
         let allPartners = [];
         let pollingInterval = null;
+        window.lastInquiries = []; // store for re-rendering archive
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchPartners();
@@ -412,7 +418,9 @@
             try {
                 const res = await fetch(`${API_BASE}/inquiries`);
                 const inquiries = await res.json();
+                window.lastInquiries = inquiries;
                 renderInbox(inquiries);
+                renderCompletedGroups();
             } catch (err) {
                 console.error("Failed to load inquiries", err);
             }
@@ -492,22 +500,89 @@
             container.innerHTML = headerHTML + pHTML;
         }
 
+        function getWeekNumberString(d) {
+            const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+            const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+            const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+            return `${date.getUTCFullYear()}年 第${weekNo}週`;
+        }
+
+        function renderCompletedGroups() {
+            const completedList = document.getElementById('completedList');
+            if (!completedList) return;
+            const inquiries = window.lastInquiries || [];
+            const completedInquiries = inquiries.filter(req => req.status === 'completed');
+            
+            const groupBy = document.getElementById('archive-grouping') ? document.getElementById('archive-grouping').value : 'month';
+            const groups = {};
+
+            completedInquiries.forEach(req => {
+                const dateObj = new Date(req.updated_at || req.created_at || Date.now());
+                let groupKey = '';
+                
+                if (groupBy === 'year') {
+                    groupKey = `${dateObj.getFullYear()}年`;
+                } else if (groupBy === 'week') {
+                    groupKey = getWeekNumberString(dateObj);
+                } else {
+                    // Default to month
+                    groupKey = `${dateObj.getFullYear()}年${String(dateObj.getMonth() + 1).padStart(2, '0')}月`;
+                }
+
+                if (!groups[groupKey]) groups[groupKey] = [];
+                
+                const badge = `<span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">完了</span>`;
+                const cardHtml = `
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-3 mb-3">
+                        <div class="flex justify-between border-b pb-1 mb-2">
+                            <span class="font-bold text-sm text-gray-800">${req.customer_name} 様 <span class="text-gray-400 text-[10px] ml-1">${req.id}</span></span>
+                            <div>${badge}</div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 truncate mb-1">ご住所: ${req.pickup_location}</p>
+                        <p class="text-[10px] text-gray-500 truncate mb-2">お荷物番号: ${req.delivery_location}</p>
+                        <p class="text-[11px] text-gray-600 truncate mb-2 bg-gray-50 p-1 rounded">内容: ${req.detail}</p>
+                    </div>
+                `;
+                groups[groupKey].push(cardHtml);
+            });
+
+            // Sort group keys descending
+            const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+            
+            let html = '';
+            sortedKeys.forEach(key => {
+                const safeId = key.replace(/[^\w-]/g, '-');
+                html += `
+                    <div class="mb-4">
+                        <button onclick="document.getElementById('group-${safeId}').classList.toggle('hidden'); document.getElementById('icon-${safeId}').classList.toggle('rotate-180');" class="w-full flex justify-between items-center bg-emerald-50 px-3 py-2 rounded shadow-sm text-sm font-bold text-emerald-800 mb-2 transition border border-emerald-100">
+                            <span>📅 ${key} <span class="text-xs font-normal ml-1">(${groups[key].length}件)</span></span>
+                            <svg id="icon-${safeId}" class="w-4 h-4 transition-transform duration-200 transform text-emerald-600 rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div id="group-${safeId}" class="space-y-3 transition-all duration-300">
+                            ${groups[key].join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            completedList.innerHTML = html || `<div class="text-center py-10 text-gray-400 text-sm">完了済みの案件はありません。</div>`;
+        }
+
         function renderInbox(inquiries) {
             const inboxList = document.getElementById('inboxList');
-            const completedList = document.getElementById('completedList');
-            
             const unhandledCount = inquiries.filter(i => i.status === 'received').length;
             
             document.getElementById('inbox-badge')?.classList.toggle('hidden', unhandledCount === 0);
             if(unhandledCount > 0) document.getElementById('inbox-badge').innerText = unhandledCount;
             
             let inboxHtml = '';
-            let completedHtml = '';
             
             inquiries.forEach((req, idx) => {
+                if(req.status === 'completed') return; // Handled by renderCompletedGroups
+                
                 const isNew = idx === 0 && unhandledCount > 0 && req.status === 'received';
-                const badge = req.status === 'completed' ? `<span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">完了</span>` :
-                              req.status === 'dispatched' ? `<span class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">手配中</span>` :
+                const badge = req.status === 'dispatched' ? `<span class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">手配中</span>` :
                               isNew ? `<span class="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1 animate-pulse">新着</span>` :
                               `<span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">受付済</span>`;
                               
@@ -527,17 +602,10 @@
                         ${btnState}
                     </div>
                 `;
-                
-                if(req.status === 'completed') {
-                    completedHtml += cardHtml;
-                } else {
-                    inboxHtml += cardHtml;
-                }
+                inboxHtml += cardHtml;
             });
             
             inboxList.innerHTML = inboxHtml || `<div class="text-center py-10 text-gray-400 text-sm" id="emptyInbox">顧客からのお問い合わせを待機中...</div>`;
-            if(completedList) completedList.innerHTML = completedHtml || `<div class="text-center py-10 text-gray-400 text-sm">完了済みの案件はありません。</div>`;
-            
             document.getElementById('emptyInbox')?.classList.toggle('hidden', inboxHtml.length > 0);
         }
 
