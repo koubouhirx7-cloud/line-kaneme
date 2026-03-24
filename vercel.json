@@ -28,6 +28,10 @@
       "dest": "/liff.html"
     },
     {
+      "src": "/admin.html",
+      "dest": "/admin.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
