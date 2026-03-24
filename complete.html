@@ -53,8 +53,8 @@
             <svg class="w-12 h-12 text-[#06C755]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
         </div>
         <h2 class="text-2xl font-bold text-gray-800 mb-2">報告が完了しました！</h2>
-        <p class="text-gray-500 text-sm mb-8 leading-relaxed">ご協力ありがとうございました。<br>この画面を閉じて、トーク画面にお戻りください。</p>
-        <button onclick="window.close()" class="bg-gray-800 text-white font-bold py-3 px-8 rounded-full shadow-md text-sm cursor-pointer hover:bg-gray-700 active:scale-95 transition-all">画面を閉じる</button>
+        <p class="text-gray-500 text-sm mb-8 leading-relaxed">ご協力ありがとうございました。<br>この画面を閉じてお戻りください。</p>
+        <button onclick="closeAppBrowser()" class="bg-gray-800 text-white font-bold py-3 px-8 rounded-full shadow-md text-sm cursor-pointer hover:bg-gray-700 active:scale-95 transition-all">画面を閉じる</button>
     </div>
 
     <!-- Spinner (Hidden initially) -->
@@ -64,6 +64,15 @@
     </div>
 
     <script>
+        function closeAppBrowser() {
+            // Attempt to close the window normally
+            window.open('','_self').close();
+            
+            // If it doesn't close within 500ms (typical in LINE in-app browsers on iOS), show an alert
+            setTimeout(() => {
+                alert("恐れ入りますが、画面上の「✕」ボタンを押してLINEのトークルームにお戻りください。");
+            }, 300);
+        }
         // Get ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const inquiryId = urlParams.get('id');
