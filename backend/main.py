@@ -4,7 +4,10 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import uuid
 import os
+import secrets
 from dotenv import load_dotenv
+from fastapi.responses import HTMLResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 import models
 import schemas
@@ -60,6 +63,33 @@ app.add_middleware(
 @app.get("/")
 def read_root():
     return {"message": "Welcome to HubCargo Delivery API"}
+
+security = HTTPBasic()
+
+def authenticate_admin(credentials: HTTPBasicCredentials = Depends(security)):
+    correct_username = secrets.compare_digest(credentials.username, os.getenv("ADMIN_USER", "admin"))
+    correct_password = secrets.compare_digest(credentials.password, os.getenv("ADMIN_PASSWORD", "hubcargo2026"))
+    if not (correct_username and correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Basic realm=\"HubCargo Admin Dashboard\""},
+        )
+    return credentials.username
+
+@app.get("/admin.html", response_class=HTMLResponse)
+def serve_admin_dashboard(request: Request, _ = Depends(authenticate_admin)):
+    project_root = os.path.dirname(os.path.dirname(__file__))
+    file_path = os.path.join(project_root, "admin.html")
+    if not os.path.exists(file_path):
+        file_path = "admin.html"
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        import logging
+        logging.getLogger("hubcargo").error(f"Failed to read admin.html: {e}")
+        return f"<html><head><meta charset='utf-8'></head><body><h1>エラー</h1><p>管理画面ファイルが見つかりません。</p></body></html>"
 
 # --- Inquiry Endpoints ---
 
