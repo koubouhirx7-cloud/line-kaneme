@@ -381,6 +381,13 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div id="screen-completed" class="fade-screen screen-hidden flex flex-col flex-1 w-full bg-gray-50 h-full overflow-hidden">
+                        <div class="bg-emerald-600 text-white p-3 shadow-md flex items-center justify-between z-10 shrink-0">
+                            <h2 class="font-bold text-sm">✅ 完了済みの案件</h2>
+                        </div>
+                        <div id="completedList" class="flex-1 p-3 overflow-y-auto pb-20"></div>
+                    </div>
 
                     <!-- カスタムボトムタブナビゲーション -->
                     <div
@@ -394,7 +401,7 @@
                             <span class="text-[10px] font-bold">顧客からの連絡</span>
                             <!-- 未読バッジ -->
                             <span id="inbox-badge"
-                                class="absolute top-1 left-[25%] bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full hidden">1</span>
+                                class="absolute top-1 left-[15%] bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full hidden">1</span>
                         </button>
                         <button onclick="switchTab('dispatch')" id="tab-dispatch"
                             class="flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 border-t-2 border-transparent hover:bg-gray-50 transition-colors">
@@ -402,7 +409,15 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
                             </svg>
-                            <span class="text-[10px] font-bold">協力会社の手配・進行</span>
+                            <span class="text-[10px] font-bold">協力会社の手配</span>
+                        </button>
+                        <button onclick="switchTab('completed')" id="tab-completed"
+                            class="flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 border-t-2 border-transparent hover:bg-gray-50 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="text-[10px] font-bold">完了済み</span>
                         </button>
                     </div>
 
@@ -674,14 +689,17 @@
         }
 
         function renderInbox(inquiries) {
-            const list = document.getElementById('inboxList');
+            const inboxList = document.getElementById('inboxList');
+            const completedList = document.getElementById('completedList');
+            
             const unhandledCount = inquiries.filter(i => i.status === 'received').length;
             
-            document.getElementById('emptyInbox')?.classList.toggle('hidden', inquiries.length > 0);
             document.getElementById('inbox-badge')?.classList.toggle('hidden', unhandledCount === 0);
             if(unhandledCount > 0) document.getElementById('inbox-badge').innerText = unhandledCount;
             
-            let html = '';
+            let inboxHtml = '';
+            let completedHtml = '';
+            
             inquiries.forEach((req, idx) => {
                 const isNew = idx === 0 && unhandledCount > 0 && req.status === 'received';
                 const badge = req.status === 'completed' ? `<span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">完了</span>` :
@@ -691,12 +709,12 @@
                               
                 const btnState = req.status === 'received' ? 
                     `<button onclick='goToDispatch(${JSON.stringify(req).replace(/'/g, "&apos;")})' class="w-full bg-indigo-600 text-white py-1.5 rounded text-xs font-bold hover:bg-indigo-700 transition shadow-sm mt-2">データを確認して協力会社の手配へ</button>` :
-                    `<button disabled class="w-full bg-gray-300 text-gray-500 py-1.5 rounded text-xs font-bold transition shadow-sm mt-2 cursor-not-allowed">手配済み</button>`;
+                    req.status === 'dispatched' ? `<button disabled class="w-full bg-gray-300 text-gray-500 py-1.5 rounded text-xs font-bold transition shadow-sm mt-2 cursor-not-allowed">手配済み (完了報告待ち)</button>` : '';
 
-                html += `
+                const cardHtml = `
                     <div class="bg-white ${req.status==='received' ? 'border-l-4 border-blue-500' : 'border border-gray-200'} rounded-lg shadow-sm p-3 mb-3 ${isNew ? 'new-request-anim' : ''}">
                         <div class="flex justify-between border-b pb-1 mb-2">
-                            <span class="font-bold text-sm text-gray-800">${req.customer_name} 様</span>
+                            <span class="font-bold text-sm text-gray-800">${req.customer_name} 様 <span class="text-gray-400 text-[10px] ml-1">${req.id}</span></span>
                             <div>${badge}</div>
                         </div>
                         <p class="text-[10px] text-gray-500 truncate mb-1">引取: ${req.pickup_location}</p>
@@ -705,8 +723,18 @@
                         ${btnState}
                     </div>
                 `;
+                
+                if(req.status === 'completed') {
+                    completedHtml += cardHtml;
+                } else {
+                    inboxHtml += cardHtml;
+                }
             });
-            list.innerHTML = html || `<div class="text-center py-10 text-gray-400 text-sm" id="emptyInbox">顧客からのお問い合わせを待機中...</div>`;
+            
+            inboxList.innerHTML = inboxHtml || `<div class="text-center py-10 text-gray-400 text-sm" id="emptyInbox">顧客からのお問い合わせを待機中...</div>`;
+            if(completedList) completedList.innerHTML = completedHtml || `<div class="text-center py-10 text-gray-400 text-sm">完了済みの案件はありません。</div>`;
+            
+            document.getElementById('emptyInbox')?.classList.toggle('hidden', inboxHtml.length > 0);
         }
 
         function updateProgress(step) {
@@ -750,7 +778,7 @@
         }
 
         function switchTab(tabName) {
-            const tabs = ['inbox', 'dispatch'];
+            const tabs = ['inbox', 'dispatch', 'completed'];
             tabs.forEach(t => {
                 const btn = document.getElementById(`tab-${t}`);
                 const screen = document.getElementById(`screen-${t}`);
