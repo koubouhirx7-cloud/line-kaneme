@@ -227,8 +227,61 @@ from typing import Optional
 class CompletePayload(BaseModel):
     note: Optional[str] = None
 
+def send_completion_push_message(to_id: str, inquiry: models.Inquiry, note: str):
+    try:
+        with ApiClient(configuration) as api_client:
+            line_bot_api = MessagingApi(api_client)
+            
+            note_text = note if note else "特になし"
+            flex_dict = {
+                "type": "bubble",
+                "size": "kilo",
+                "header": {
+                    "type": "box",
+                    "layout": "vertical",
+                    "contents": [
+                        {"type": "text", "text": "✅ 報告受理完了", "color": "#ffffff", "weight": "bold", "size": "md"}
+                    ],
+                    "backgroundColor": "#29a329",
+                    "paddingTop": "12px",
+                    "paddingBottom": "12px"
+                },
+                "body": {
+                    "type": "box",
+                    "layout": "vertical",
+                    "spacing": "md",
+                    "contents": [
+                        {"type": "text", "text": "完了報告を受け付けました！\nありがとうございます。", "weight": "bold", "size": "md", "wrap": True, "color": "#111111"},
+                        {
+                            "type": "box",
+                            "layout": "vertical",
+                            "spacing": "sm",
+                            "margin": "lg",
+                            "contents": [
+                                {"type": "text", "text": f"受付番号: {inquiry.id}", "size": "sm", "color": "#666666"},
+                                {"type": "text", "text": f"顧客名: {inquiry.customer_name} 様", "size": "sm", "color": "#666666", "wrap": True},
+                                {"type": "text", "text": f"特記事項: {note_text}", "size": "sm", "color": "#666666", "wrap": True}
+                            ],
+                            "backgroundColor": "#f4f6f9",
+                            "paddingAll": "12px",
+                            "cornerRadius": "8px"
+                        }
+                    ],
+                    "paddingAll": "20px"
+                }
+            }
+            
+            line_bot_api.push_message(
+                PushMessageRequest(
+                    to=to_id,
+                    messages=[FlexMessage(alt_text=f"✅ 報告受理: {inquiry.id}", contents=FlexContainer.from_dict(flex_dict))]
+                )
+            )
+    except Exception as e:
+        print(f"Failed to send complete push message: {e}")
+
 @app.post("/api/inquiries/{inquiry_id}/complete", response_model=schemas.InquiryResponse)
-def complete_inquiry(inquiry_id: str, payload: CompletePayload = None, db: Session = Depends(get_db)):
+def complete_inquiry(inquiry_id: str, background_tasks: BackgroundTasks, payload: CompletePayload = None, db: Session = Depends(get_db)):
     # This endpoint can be used by the webhook or manually to mark as completed
     inquiry = db.query(models.Inquiry).filter(models.Inquiry.id == inquiry_id).first()
     if not inquiry:
@@ -238,6 +291,13 @@ def complete_inquiry(inquiry_id: str, payload: CompletePayload = None, db: Sessi
         inquiry.detail += f"\n\n【完了報告】\n{payload.note}"
         
     inquiry.status = "completed"
+    
+    if inquiry.dispatched_to_partner_id:
+        partner = db.query(models.Partner).filter(models.Partner.id == inquiry.dispatched_to_partner_id).first()
+        if partner and partner.line_group_id and os.getenv("LINE_CHANNEL_ACCESS_TOKEN"):
+            note_val = payload.note if payload and payload.note else "特になし"
+            background_tasks.add_task(send_completion_push_message, partner.line_group_id, inquiry, note_val)
+            
     db.commit()
     db.refresh(inquiry)
     return inquiry
