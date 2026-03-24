@@ -11,6 +11,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 import models
 import schemas
+from admin_template import ADMIN_HTML
 from database import engine, get_db
 
 # LINE API Imports
@@ -79,17 +80,7 @@ def authenticate_admin(credentials: HTTPBasicCredentials = Depends(security)):
 
 @app.get("/admin.html", response_class=HTMLResponse)
 def serve_admin_dashboard(request: Request, _ = Depends(authenticate_admin)):
-    project_root = os.path.dirname(os.path.dirname(__file__))
-    file_path = os.path.join(project_root, "admin.html")
-    if not os.path.exists(file_path):
-        file_path = "admin.html"
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            return f.read()
-    except Exception as e:
-        import logging
-        logging.getLogger("hubcargo").error(f"Failed to read admin.html: {e}")
-        return f"<html><head><meta charset='utf-8'></head><body><h1>エラー</h1><p>管理画面ファイルが見つかりません。</p></body></html>"
+    return ADMIN_HTML
 
 # --- Inquiry Endpoints ---
 
