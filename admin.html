@@ -535,6 +535,25 @@
             }
         }
 
+        async function manualCompleteInquiry(id) {
+            if (!confirm(`受付番号 ${id} を手動で「完了」にしますか？`)) return;
+            try {
+                const res = await fetch(`${API_BASE}/inquiries/${id}/complete`, { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ note: "管理者による手動完了" })
+                });
+                if (res.ok) {
+                    fetchInquiries(); // Refresh all
+                } else {
+                    alert('完了処理に失敗しました。');
+                }
+            } catch(e) {
+                console.error(e);
+                alert('通信エラーが発生しました。');
+            }
+        }
+
         function renderCompletedGroups() {
             const completedList = document.getElementById('completedList');
             if (!completedList) return;
@@ -626,7 +645,15 @@
                               
                 const btnState = req.status === 'received' ? 
                     `<button onclick='goToDispatch(${JSON.stringify(req).replace(/'/g, "&apos;")})' class="w-full bg-indigo-600 text-white py-1.5 rounded text-xs font-bold hover:bg-indigo-700 transition shadow-sm mt-2">データを確認して協力会社の手配へ</button>` :
-                    req.status === 'dispatched' ? `<button disabled class="w-full bg-gray-300 text-gray-500 py-1.5 rounded text-xs font-bold transition shadow-sm mt-2 cursor-not-allowed">手配済み (完了報告待ち)</button>` : '';
+                    req.status === 'dispatched' ? `
+                        <div class="flex gap-2 mt-2">
+                            <div class="flex-1 bg-gray-100 text-gray-500 py-1.5 rounded text-xs font-bold text-center border border-gray-200 flex items-center justify-center">報告待ち</div>
+                            <button onclick="manualCompleteInquiry('${req.id}')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded text-xs font-bold transition shadow-sm flex items-center justify-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                手動で完了
+                            </button>
+                        </div>
+                    ` : '';
 
                 const cardHtml = `
                     <div class="bg-white ${req.status==='received' ? 'border-l-4 border-blue-500' : 'border border-gray-200'} rounded-lg shadow-sm p-3 mb-3 ${isNew ? 'new-request-anim' : ''}">
