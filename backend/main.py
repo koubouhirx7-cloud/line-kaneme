@@ -18,7 +18,9 @@ from linebot.v3.messaging import (
     ApiClient,
     MessagingApi,
     PushMessageRequest,
-    TextMessage
+    TextMessage,
+    FlexMessage,
+    FlexContainer
 )
 from linebot.v3.webhooks import (
     MessageEvent,
@@ -99,25 +101,119 @@ def dispatch_inquiry(inquiry_id: str, request_data: schemas.DispatchRequest, bac
 def send_line_push_message(to_id: str, inquiry: models.Inquiry, partner: models.Partner):
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
-        text_message = TextMessage(
-            text=f"📞 お客様への連絡依頼\n"
-                 f"お客様名: {inquiry.customer_name}\n"
-                 f"引取先: {inquiry.pickup_location}\n"
-                 f"納品先: {inquiry.delivery_location}\n"
-                 f"電話番号: {inquiry.phone_number}\n"
-                 f"お問い合わせ内容:\n{inquiry.detail}\n\n"
-                 f"※連絡完了後、以下のURLから完了報告をお願いします（連携テスト用）:\n"
-                 f"https://hubcargo-mock.com/complete/{inquiry.id}"
-        )
+        
+        flex_dict = {
+            "type": "bubble",
+            "size": "kilo",
+            "header": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                    {
+                        "type": "text",
+                        "text": "📞 お客様への連絡依頼",
+                        "color": "#ffffff",
+                        "align": "start",
+                        "size": "md",
+                        "weight": "bold"
+                    }
+                ],
+                "backgroundColor": "#2764E5",
+                "paddingTop": "12px",
+                "paddingBottom": "12px"
+            },
+            "body": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                    {
+                        "type": "text",
+                        "text": f"{inquiry.customer_name} 様",
+                        "weight": "bold",
+                        "size": "xl",
+                        "wrap": True,
+                        "margin": "md"
+                    },
+                    {
+                        "type": "text",
+                        "text": f"☎ {inquiry.phone_number}",
+                        "color": "#2764E5",
+                        "weight": "bold",
+                        "size": "lg"
+                    },
+                    {
+                        "type": "box",
+                        "layout": "vertical",
+                        "margin": "lg",
+                        "spacing": "sm",
+                        "contents": [
+                            {
+                                "type": "box",
+                                "layout": "baseline",
+                                "spacing": "sm",
+                                "contents": [
+                                    {"type": "text", "text": "引取:", "color": "#aaaaaa", "size": "sm", "flex": 1},
+                                    {"type": "text", "text": f"{inquiry.pickup_location}", "wrap": True, "color": "#666666", "size": "sm", "flex": 5}
+                                ]
+                            },
+                            {
+                                "type": "box",
+                                "layout": "baseline",
+                                "spacing": "sm",
+                                "contents": [
+                                    {"type": "text", "text": "納品:", "color": "#aaaaaa", "size": "sm", "flex": 1},
+                                    {"type": "text", "text": f"{inquiry.delivery_location}", "wrap": True, "color": "#666666", "size": "sm", "flex": 5}
+                                ]
+                            },
+                            {
+                                "type": "text",
+                                "text": f"詳細:\n{inquiry.detail}",
+                                "wrap": True,
+                                "color": "#666666",
+                                "size": "sm",
+                                "margin": "lg"
+                            }
+                        ],
+                        "backgroundColor": "#f8f9fa",
+                        "paddingAll": "12px",
+                        "cornerRadius": "8px",
+                        "borderColor": "#e9ecef",
+                        "borderWidth": "1px"
+                    }
+                ],
+                "paddingAll": "20px"
+            },
+            "footer": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                    {
+                        "type": "button",
+                        "action": {
+                            "type": "message",
+                            "label": "✔ 完了報告する",
+                            "text": f"完了 {inquiry.id}"
+                        },
+                        "color": "#e9ecef",
+                        "style": "secondary"
+                    }
+                ],
+                "paddingAll": "20px"
+            }
+        }
+        
         try:
+            flex_container = FlexContainer.from_dict(flex_dict)
+            flex_message = FlexMessage(alt_text=f"📞 お客様への連絡依頼: {inquiry.customer_name} 様", contents=flex_container)
+            
             line_bot_api.push_message(
                 PushMessageRequest(
                     to=to_id,
-                    messages=[text_message]
+                    messages=[flex_message]
                 )
             )
         except Exception as e:
-            print(f"Failed to send LINE message: {e}")
+            print(f"Failed to send LINE Flex message: {e}")
 
 @app.post("/api/inquiries/{inquiry_id}/complete", response_model=schemas.InquiryResponse)
 def complete_inquiry(inquiry_id: str, db: Session = Depends(get_db)):
