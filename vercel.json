@@ -24,6 +24,10 @@
       "dest": "/complete.html"
     },
     {
+      "src": "/liff.html",
+      "dest": "/liff.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }

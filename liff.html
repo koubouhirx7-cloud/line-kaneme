@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>お問い合わせ - 配送受付</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; }
+        .success-anim { animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes scaleIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white text-gray-800 p-4 shadow-sm flex items-center justify-center sticky top-0 z-10 border-b">
+        <h1 class="font-bold text-lg">お問い合わせフォーム</h1>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-md mx-auto p-5" id="mainContainer">
+        
+        <form id="inquiryForm" onsubmit="submitInquiry(event)">
+            
+            <div class="mb-4">
+                <label class="block font-bold text-gray-700 text-[13px] mb-1.5">顧客名 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
+                <input type="text" id="custName" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 株式会社グローバル 山田">
+            </div>
+
+            <div class="mb-4">
+                <label class="block font-bold text-gray-700 text-[13px] mb-1.5">電話番号 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
+                <input type="tel" id="custPhone" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 090-1234-5678">
+            </div>
+
+            <div class="mb-4">
+                <label class="block font-bold text-gray-700 text-[13px] mb-1.5">ご住所 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
+                <input type="text" id="custFrom" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 東京都千代田区〜">
+            </div>
+
+            <div class="mb-4">
+                <label class="block font-bold text-gray-700 text-[13px] mb-1.5">お荷物番号 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
+                <input type="text" id="custTo" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 1234-5678-9012">
+            </div>
+
+            <div class="mb-8">
+                <label class="block font-bold text-gray-700 text-[13px] mb-1.5">お問い合わせ内容 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
+                <textarea id="custDetail" required rows="3" class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors resize-none" placeholder="例: 明日の午前中に到着時間の事前電話をお願いします。"></textarea>
+            </div>
+            
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] transition-all active:scale-95 text-base flex items-center justify-center gap-2">
+                問い合わせを送信
+            </button>
+        </form>
+
+    </main>
+
+    <!-- Success Screen (Hidden initially) -->
+    <div id="successScreen" class="hidden fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 text-center">
+        <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 success-anim">
+            <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">送信が完了しました</h2>
+        <p class="text-gray-500 text-sm mb-8 leading-relaxed">お問い合わせありがとうございます。<br>手配が進行次第、ご連絡いたします。<br><br>この画面を閉じてトークにお戻りください。</p>
+        <button onclick="closeAppBrowser()" class="bg-gray-800 text-white font-bold py-3 px-8 rounded-full shadow-md text-sm cursor-pointer hover:bg-gray-700 active:scale-95 transition-all">画面を閉じる</button>
+    </div>
+
+    <!-- Spinner (Hidden initially) -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-white/80 backdrop-blur-sm z-40 flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-blue-600 mb-4"></div>
+        <p class="text-gray-600 font-bold text-sm">送信中...</p>
+    </div>
+
+    <script>
+        function closeAppBrowser() {
+            // Attempt to close the window normally
+            window.open('','_self').close();
+            
+            // If it doesn't close within 500ms
+            setTimeout(() => {
+                alert("恐れ入りますが、画面上の「✕」や「完了」ボタンを押してLINEのトークルームにお戻りください。");
+            }, 300);
+        }
+
+        async function submitInquiry(e) {
+            e.preventDefault();
+
+            const cName = document.getElementById('custName').value;
+            const cPhone = document.getElementById('custPhone').value;
+            const cFrom = document.getElementById('custFrom').value;
+            const cTo = document.getElementById('custTo').value;
+            const cDetail = document.getElementById('custDetail').value;
+
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.remove('hidden');
+
+            try {
+                const API_BASE = window.location.origin + '/api';
+                
+                const response = await fetch(`${API_BASE}/inquiries`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        customer_name: cName,
+                        phone_number: cPhone,
+                        pickup_location: cFrom,
+                        delivery_location: cTo,
+                        detail: cDetail
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                overlay.classList.add('hidden');
+                document.getElementById('mainContainer').classList.add('hidden');
+                document.getElementById('successScreen').classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Submission error:", error);
+                overlay.classList.add('hidden');
+                alert("送信に失敗しました。通信環境をご確認の上、もう一度お試しください。");
+            }
+        }
+    </script>
+</body>
+</html>
