@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>完了報告 - HubCargo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; }
+        .success-anim { animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes scaleIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-[#06C755] text-white p-4 shadow-md flex items-center justify-center sticky top-0 z-10">
+        <h1 class="font-bold text-lg">完了報告フォーム</h1>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-md mx-auto p-4 mt-4" id="mainContainer">
+        
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-5">
+            <h2 class="text-xs font-bold text-gray-400 mb-1 tracking-wider uppercase">受付番号</h2>
+            <p class="text-xl font-bold font-mono text-gray-800 tracking-tight" id="dispId">読込中...</p>
+        </div>
+
+        <form id="completeForm" onsubmit="submitReport(event)">
+            <div class="mb-6">
+                <label for="note" class="block font-bold text-gray-700 text-sm mb-2">特記事項・メッセージ（任意）</label>
+                <textarea 
+                    id="note" 
+                    rows="4" 
+                    class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-[#06C755] focus:ring-1 focus:ring-[#06C755] transition-colors resize-none placeholder-gray-300" 
+                    placeholder="例: 無事にお客様へ引き渡し完了しました。"
+                ></textarea>
+            </div>
+            
+            <button type="submit" id="submitBtn" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_0_rgba(6,199,85,0.39)] transition-all active:scale-95 text-lg flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                報告を送信する
+            </button>
+        </form>
+
+    </main>
+
+    <!-- Success Screen (Hidden initially) -->
+    <div id="successScreen" class="hidden fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 text-center">
+        <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 success-anim">
+            <svg class="w-12 h-12 text-[#06C755]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">報告が完了しました！</h2>
+        <p class="text-gray-500 text-sm mb-8 leading-relaxed">ご協力ありがとうございました。<br>この画面を閉じて、トーク画面にお戻りください。</p>
+        <button onclick="window.close()" class="bg-gray-800 text-white font-bold py-3 px-8 rounded-full shadow-md text-sm cursor-pointer hover:bg-gray-700 active:scale-95 transition-all">画面を閉じる</button>
+    </div>
+
+    <!-- Spinner (Hidden initially) -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-white/80 backdrop-blur-sm z-40 flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#06C755] mb-4"></div>
+        <p class="text-gray-600 font-bold text-sm">送信中...</p>
+    </div>
+
+    <script>
+        // Get ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const inquiryId = urlParams.get('id');
+        
+        const dispIdElement = document.getElementById('dispId');
+        
+        if (inquiryId) {
+            dispIdElement.textContent = inquiryId;
+        } else {
+            dispIdElement.textContent = "IDがありません";
+            dispIdElement.classList.add('text-red-500');
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').classList.replace('bg-[#06C755]', 'bg-gray-400');
+        }
+
+        async function submitReport(e) {
+            e.preventDefault();
+            if(!inquiryId) return;
+
+            const note = document.getElementById('note').value;
+            const overlay = document.getElementById('loadingOverlay');
+            
+            overlay.classList.remove('hidden');
+
+            try {
+                // We use relative path for API_BASE in Vercel
+                const API_BASE = window.location.origin + '/api';
+                
+                const response = await fetch(`${API_BASE}/inquiries/${inquiryId}/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ note: note })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                overlay.classList.add('hidden');
+                document.getElementById('mainContainer').classList.add('hidden');
+                document.getElementById('successScreen').classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Submission error:", error);
+                overlay.classList.add('hidden');
+                alert("送信に失敗しました。もう一度お試しください。");
+            }
+        }
+    </script>
+</body>
+</html>

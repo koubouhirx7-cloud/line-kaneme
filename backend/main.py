@@ -196,12 +196,12 @@ def send_line_push_message(to_id: str, inquiry: models.Inquiry, partner: models.
                     {
                         "type": "button",
                         "action": {
-                            "type": "message",
+                            "type": "uri",
                             "label": "✔ 完了報告する",
-                            "text": f"完了 {inquiry.id}"
+                            "uri": f"https://line-kaneme.vercel.app/complete.html?id={inquiry.id}"
                         },
-                        "color": "#e9ecef",
-                        "style": "secondary"
+                        "color": "#06C755",
+                        "style": "primary"
                     }
                 ],
                 "paddingAll": "20px"
@@ -221,12 +221,21 @@ def send_line_push_message(to_id: str, inquiry: models.Inquiry, partner: models.
         except Exception as e:
             print(f"Failed to send LINE Flex message: {e}")
 
+from pydantic import BaseModel
+from typing import Optional
+
+class CompletePayload(BaseModel):
+    note: Optional[str] = None
+
 @app.post("/api/inquiries/{inquiry_id}/complete", response_model=schemas.InquiryResponse)
-def complete_inquiry(inquiry_id: str, db: Session = Depends(get_db)):
+def complete_inquiry(inquiry_id: str, payload: CompletePayload = None, db: Session = Depends(get_db)):
     # This endpoint can be used by the webhook or manually to mark as completed
     inquiry = db.query(models.Inquiry).filter(models.Inquiry.id == inquiry_id).first()
     if not inquiry:
         raise HTTPException(status_code=404, detail="Inquiry not found")
+        
+    if payload and payload.note:
+        inquiry.detail += f"\n\n【完了報告】\n{payload.note}"
         
     inquiry.status = "completed"
     db.commit()
