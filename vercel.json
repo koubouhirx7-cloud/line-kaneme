@@ -1,29 +1,12 @@
 {
-  "version": 2,
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "api/index.py"
+      "source": "/api/(.*)",
+      "destination": "/api/index.py"
     },
     {
-      "src": "/webhook/line",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/complete.html",
-      "dest": "/complete.html"
-    },
-    {
-      "src": "/liff.html",
-      "dest": "/liff.html"
-    },
-    {
-      "src": "/admin.html",
-      "dest": "/admin.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/webhook/line",
+      "destination": "/api/index.py"
     }
   ]
 }
