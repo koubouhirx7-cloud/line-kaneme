@@ -642,7 +642,7 @@
                 let partnerText = '';
                 if(req.status === 'dispatched' && req.dispatched_to_partner_id) {
                     const p = mockPartners.find(x => x.id === req.dispatched_to_partner_id);
-                    if(p) partnerText = `<div class="text-[10px] text-gray-500 font-bold mb-1">手配先: ${p.name}</div>`;
+                    if(p) partnerText = `<div class="inline-block mt-0.5 mb-2 px-2 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold rounded-md shadow-sm">🏢 手配先: ${p.name}</div>`;
                 }
 
                 const badge = req.status === 'dispatched' ? `<span class="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-0.5 rounded mr-1">手配中</span>` :
