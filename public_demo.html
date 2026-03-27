@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HubCargo - LINE完結型の次世代 配送手配システム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#06C755', // LINE Green
+                        dark: '#111827',
+                        light: '#F9FAFB'
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;scroll-behavior: smooth; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #06C755 0%, #049640 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased overflow-x-hidden">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex-shrink-0 flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-xl">H</div>
+                    <span class="font-bold text-xl tracking-tight">HubCargo</span>
+                </div>
+                <!-- <div class="hidden md:flex space-x-8">
+                    <a href="#features" class="text-gray-600 hover:text-primary transition font-medium">特徴</a>
+                    <a href="#workflow" class="text-gray-600 hover:text-primary transition font-medium">仕組み</a>
+                </div> -->
+                <div>
+                    <a href="mailto:info@example.com" class="bg-dark text-white px-5 py-2 rounded-full font-bold text-sm hover:bg-gray-800 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">お問い合わせ</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <div class="absolute inset-0 bg-gradient-to-br from-green-50 to-blue-50 opacity-90"></div>
+            <!-- Decorative blobs -->
+            <div class="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float"></div>
+            <div class="absolute top-40 right-10 w-72 h-72 bg-blue-300/30 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style="animation-delay: 2s;"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center max-w-4xl mx-auto animate-fade-in-up">
+                <span class="inline-block py-1 px-3 rounded-full bg-green-100 text-green-700 font-bold text-xs mb-6 tracking-wide border border-green-200">B2B2C 配送業務のDX化</span>
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
+                    受付から配車手配まで、<br class="hidden md:block"/>
+                    すべてを <span class="gradient-text">LINEで一元管理。</span>
+                </h1>
+                <p class="text-lg md:text-xl text-gray-600 mb-10 leading-relaxed max-w-2xl mx-auto">
+                    顧客からの配送依頼受け付けも、協力会社への配車依頼も。複数ツールを行き来していたアナログな電話・FAX業務を、誰もが使い慣れたLINEアプリ上で完結させます。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- UI Mockup Showcase -->
+    <section class="py-10 bg-white relative z-20 -mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass-card rounded-3xl p-4 md:p-8 transform -translate-y-12 animate-fade-in-up flex flex-col items-center" style="animation-delay: 0.2s;">
+                <div class="w-full flex justify-center mb-6 border-b pb-4">
+                     <h2 class="text-2xl font-bold text-center text-gray-800">📊 直感的な管理ダッシュボード</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
+                    <!-- Dashboard Mock -->
+                    <div class="bg-gray-100 rounded-2xl p-4 shadow-inner border border-gray-200 flex flex-col relative overflow-hidden h-96 group hover:shadow-md transition">
+                       <div class="absolute top-0 left-0 w-full bg-dark text-white p-3 flex justify-between items-center rounded-t-xl z-10">
+                           <span class="font-bold text-sm">HubCargo 管理システム</span>
+                           <span class="text-xs opacity-70">管理者</span>
+                       </div>
+                       <div class="pt-14 pb-4 px-2 overflow-y-auto h-full space-y-3">
+                           <!-- Card 1 -->
+                           <div class="bg-white p-3 rounded-lg border-l-4 border-yellow-400 shadow-sm">
+                               <div class="flex justify-between items-center mb-2">
+                                   <span class="font-bold text-sm">株式会社〇〇 様</span>
+                                   <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded font-bold">手配待ち</span>
+                               </div>
+                               <p class="text-xs text-gray-500 mb-1">住所: 東京都千代田区...</p>
+                               <div class="mt-3 flex gap-2">
+                                   <div class="bg-blue-50 text-blue-600 text-xs py-1.5 px-3 rounded text-center flex-1 cursor-not-allowed border border-blue-200">協力会社へ手配 (LINE)</div>
+                               </div>
+                           </div>
+                           <!-- Card 2 -->
+                           <div class="bg-white p-3 rounded-lg border-l-4 border-blue-500 shadow-sm opacity-70">
+                               <div class="flex justify-between items-center mb-2">
+                                   <span class="font-bold text-sm">田中 太郎 様</span>
+                                   <span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded font-bold">配車完了</span>
+                               </div>
+                               <p class="text-xs text-gray-500">住所: 神奈川県横浜市...</p>
+                               <p class="text-xs text-gray-400 mt-1">→ 担当: 第一運輸Grp</p>
+                           </div>
+                       </div>
+                    </div>
+                    
+                    <!-- Explanation -->
+                    <div class="flex flex-col justify-center space-y-6">
+                        <div class="flex gap-4">
+                            <div class="flex-shrink-0 w-12 h-12 bg-green-100 text-primary rounded-full flex items-center justify-center text-xl font-bold">1</div>
+                            <div>
+                                <h3 class="text-lg font-bold mb-2">ブラウザで開くだけ</h3>
+                                <p class="text-sm text-gray-600 leading-relaxed">専用アプリのインストールは不要。PCでもスマホでも、ブラウザを開くだけで即座にリアルタイムな受発注状況を確認できます。</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="flex-shrink-0 w-12 h-12 bg-green-100 text-primary rounded-full flex items-center justify-center text-xl font-bold">2</div>
+                            <div>
+                                <h3 class="text-lg font-bold mb-2">顧客情報は自動反映</h3>
+                                <p class="text-sm text-gray-600 leading-relaxed">顧客がLINEから入力した配送依頼データが、秒単位で自動的にダッシュボードへ同期されます。</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="flex-shrink-0 w-12 h-12 bg-green-100 text-primary rounded-full flex items-center justify-center text-xl font-bold">3</div>
+                            <div>
+                                <h3 class="text-lg font-bold mb-2">ワンタップで協力会社へ</h3>
+                                <p class="text-sm text-gray-600 leading-relaxed">案件を選んで「協力会社へ手配」を押すだけで、自動生成された手配テキストが提携運送会社のLINEグループへ自動送信されます。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Workflow Section -->
+    <section class="py-20 bg-gray-50" id="workflow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-4">わずか4ステップの圧倒的シームレス体験</h2>
+                <p class="text-lg text-gray-600">入力から手配、完了報告まで、すべての工程から「無駄な電話連絡」を排除します。</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Step 1 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition duration-300 relative">
+                    <div class="absolute -top-4 -left-4 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg shadow-md">1</div>
+                    <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-blue-500 text-2xl">📱</div>
+                    <h3 class="text-xl font-bold mb-3">顧客からの依頼</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">顧客は御社のLINE公式アカウントを開き、リッチメニューからそのまま配送先や荷物情報を入力します。</p>
+                </div>
+                <!-- Step 2 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition duration-300 relative">
+                    <div class="absolute -top-4 -left-4 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg shadow-md">2</div>
+                    <div class="w-16 h-16 bg-yellow-50 rounded-2xl flex items-center justify-center mb-6 text-yellow-500 text-2xl">💻</div>
+                    <h3 class="text-xl font-bold mb-3">ダッシュボード受信</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">管理者はWeb上のダッシュボードで新着案件をリアルタイムに確認。ステータスは「手配待ち」になります。</p>
+                </div>
+                <!-- Step 3 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition duration-300 relative">
+                    <div class="absolute -top-4 -left-4 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg shadow-md">3</div>
+                    <div class="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mb-6 text-green-500 text-2xl">🚀</div>
+                    <h3 class="text-xl font-bold mb-3">協力会社へLINE手配</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">ボタンを押して手配先を選ぶだけで、協力会社のLINEグループに案件情報が自動送信されます。</p>
+                </div>
+                <!-- Step 4 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition duration-300 relative">
+                    <div class="absolute -top-4 -left-4 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg shadow-md">4</div>
+                    <div class="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mb-6 text-purple-500 text-2xl">✅</div>
+                    <h3 class="text-xl font-bold mb-3">LINEで完了報告</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">配達を終えたドライバーがLINEで返信するだけで、自動的に管理画面も完了ステータスへ移行します。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer CTA -->
+    <section class="bg-dark text-white py-20 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-blue-500"></div>
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h2 class="text-3xl font-extrabold mb-6">LINEを使った新しい配送管理を、今すぐ体験。</h2>
+            <p class="text-gray-400 mb-10 text-lg">システム導入をご検討の方は、お気軽にお問い合わせください。</p>
+            <a href="mailto:info@example.com" class="inline-block bg-primary hover:bg-green-500 text-white font-bold text-lg py-4 px-10 rounded-full shadow-[0_0_20px_rgba(6,199,85,0.4)] transition transform hover:scale-105">
+                導入のご相談・デモのお申し込み
+            </a>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 border-t border-gray-800 py-8 text-center text-gray-500 text-sm">
+        <p>&copy; 2026 HubCargo Delivery Systems. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>

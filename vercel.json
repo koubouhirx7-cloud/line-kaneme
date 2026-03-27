@@ -17,6 +17,7 @@
     { "src": "/index.html", "dest": "api/index.py" },
     { "src": "/", "dest": "api/index.py" },
     { "src": "/complete.html", "dest": "/complete.html" },
-    { "src": "/liff.html", "dest": "/liff.html" }
+    { "src": "/liff.html", "dest": "/liff.html" },
+    { "src": "/public_demo.html", "dest": "/public_demo.html" }
   ]
 }
