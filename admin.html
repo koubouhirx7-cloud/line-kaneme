@@ -902,8 +902,6 @@
                 updateProgress(4);
                 fetchInquiries(); // Background update inbox
 
-                document.getElementById('partnerEmpty').classList.add('hidden');
-                
                 // Show message on Partner side (if chat mock exists)
                 const chat = document.getElementById('partnerChat');
                 if (chat) {
@@ -981,9 +979,13 @@
                 for (let i = 1; i <= 4; i++) {
                     const circle = document.getElementById(`circle-${i}`);
                     const text = document.getElementById(`text-${i}`);
-                    circle.className = "w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-sm step-done transition-colors duration-300";
-                    circle.innerHTML = "✓";
-                    text.className = "ml-2 text-sm font-bold text-emerald-600";
+                    if (circle) {
+                        circle.className = "w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-sm step-done transition-colors duration-300";
+                        circle.innerHTML = "✓";
+                    }
+                    if (text) {
+                        text.className = "ml-2 text-sm font-bold text-emerald-600";
+                    }
                 }
                 
                 fetchInquiries(); // Refetch to mark inbox item as completed if they go back
