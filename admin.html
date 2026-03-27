@@ -701,39 +701,43 @@
                 const circle = document.getElementById(`circle-${i}`);
                 const text = document.getElementById(`text-${i}`);
                 const line = document.getElementById(`line-${i}`);
+                
+                if (!circle) continue;
 
                 if (i < step) {
                     circle.className = "w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-sm step-done transition-colors duration-300";
                     circle.innerHTML = "✓";
-                    text.className = "ml-2 text-sm font-bold text-emerald-600";
+                    if (text) text.className = "ml-2 text-sm font-bold text-emerald-600";
                     if (line) line.classList.replace('bg-gray-200', 'bg-emerald-500');
                 } else if (i === step) {
                     circle.className = "w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-sm step-active transition-colors duration-300";
                     circle.innerHTML = i;
-                    text.className = "ml-2 text-sm font-bold text-blue-600";
+                    if (text) text.className = "ml-2 text-sm font-bold text-blue-600";
                     if (line) line.classList.replace('bg-emerald-500', 'bg-gray-200');
                 } else {
                     circle.className = "w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-sm step-inactive transition-colors duration-300";
                     circle.innerHTML = i;
-                    text.className = "ml-2 text-sm font-bold text-gray-400";
+                    if (text) text.className = "ml-2 text-sm font-bold text-gray-400";
                     if (line) line.classList.replace('bg-emerald-500', 'bg-gray-200');
                 }
             }
 
-            if (step === 2) {
-                document.getElementById('badge-step-2').classList.replace('opacity-50', 'text-yellow-300');
-                document.getElementById('badge-step-3').classList.replace('text-yellow-300', 'opacity-50');
-            } else if (step === 3) {
-                document.getElementById('badge-step-2').classList.replace('text-yellow-300', 'opacity-50');
-                document.getElementById('badge-step-3').classList.replace('opacity-50', 'text-yellow-300');
-            } else if (step === 4) {
-                const arrow = document.getElementById('arrow-to-partner');
-                if (arrow) arrow.classList.replace('text-gray-300', 'text-blue-500');
-                const pZone = document.getElementById('partner-zone');
-                if (pZone) pZone.classList.remove('opacity-50', 'pointer-events-none');
-                const b4 = document.getElementById('badge-step-4');
-                if (b4) b4.classList.replace('bg-gray-400', 'bg-[#06C755]');
-            }
+            try {
+                if (step === 2) {
+                    if (document.getElementById('badge-step-2')) document.getElementById('badge-step-2').classList.replace('opacity-50', 'text-yellow-300');
+                    if (document.getElementById('badge-step-3')) document.getElementById('badge-step-3').classList.replace('text-yellow-300', 'opacity-50');
+                } else if (step === 3) {
+                    if (document.getElementById('badge-step-2')) document.getElementById('badge-step-2').classList.replace('text-yellow-300', 'opacity-50');
+                    if (document.getElementById('badge-step-3')) document.getElementById('badge-step-3').classList.replace('opacity-50', 'text-yellow-300');
+                } else if (step === 4) {
+                    const arrow = document.getElementById('arrow-to-partner');
+                    if (arrow) arrow.classList.replace('text-gray-300', 'text-blue-500');
+                    const pZone = document.getElementById('partner-zone');
+                    if (pZone) pZone.classList.remove('opacity-50', 'pointer-events-none');
+                    const b4 = document.getElementById('badge-step-4');
+                    if (b4) b4.classList.replace('bg-gray-400', 'bg-[#06C755]');
+                }
+            } catch (e) {}
         }
 
         function switchTab(tabName) {
