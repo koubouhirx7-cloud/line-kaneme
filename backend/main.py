@@ -203,7 +203,7 @@ def send_line_push_message(to_id: str, inquiry: models.Inquiry, partner: models.
                     },
                     {
                         "type": "text",
-                        "text": f"☎ {inquiry.phone_number} (タップで発信)",
+                        "text": f"☎ {inquiry.phone_number or '番号なし'} (タップで発信)",
                         "color": "#2764E5",
                         "weight": "bold",
                         "size": "lg",
@@ -211,7 +211,7 @@ def send_line_push_message(to_id: str, inquiry: models.Inquiry, partner: models.
                         "action": {
                             "type": "uri",
                             "label": "電話をかける",
-                            "uri": f"tel:{inquiry.phone_number.replace('-', '')}"
+                            "uri": f"tel:{(inquiry.phone_number or '0000000000').replace('-', '')}"
                         }
                     },
                     {
@@ -287,6 +287,8 @@ def send_line_push_message(to_id: str, inquiry: models.Inquiry, partner: models.
             )
         except Exception as e:
             print(f"Failed to send LINE Flex message: {e}")
+            from fastapi import HTTPException
+            raise HTTPException(status_code=500, detail=f"Failed to send LINE message: {str(e)}")
 
 from pydantic import BaseModel
 from typing import Optional

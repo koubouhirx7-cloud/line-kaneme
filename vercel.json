@@ -5,7 +5,7 @@
       "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
-        "includeFiles": "admin.html"
+        "includeFiles": "{admin.html,index.html}"
       }
     },
     { "src": "*.html", "use": "@vercel/static" }
