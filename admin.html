@@ -717,6 +717,13 @@
                 if(req.status === 'completed') return; // Handled by renderCompletedGroups
                 
                 const isNew = idx === 0 && unhandledCount > 0 && req.status === 'received';
+                
+                let partnerText = '';
+                if(req.status === 'dispatched' && req.dispatched_to_partner_id) {
+                    const p = allPartners.find(x => x.id === req.dispatched_to_partner_id);
+                    if(p) partnerText = `<div class="text-[10px] text-gray-500 font-bold mb-1">手配先: ${p.name}</div>`;
+                }
+
                 const badge = req.status === 'dispatched' ? `<span class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">手配中</span>` :
                               isNew ? `<span class="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1 animate-pulse">新着</span>` :
                               `<span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">受付済</span>`;
@@ -740,6 +747,7 @@
                             <span class="font-bold text-sm text-gray-800">${req.customer_name} 様 <span class="text-gray-400 text-[10px] ml-1">${req.id}</span></span>
                             <div>${badge}</div>
                         </div>
+                        ${partnerText}
                         <p class="text-[10px] text-gray-500 truncate mb-1">ご住所: ${req.pickup_location}</p>
                         <p class="text-[10px] text-gray-500 truncate mb-2">お荷物番号: ${req.delivery_location}</p>
                         <p class="text-[11px] text-gray-600 truncate mb-2 bg-gray-50 p-1 rounded">内容: ${req.detail}</p>
