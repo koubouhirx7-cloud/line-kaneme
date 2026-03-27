@@ -8,18 +8,11 @@ import secrets
 from dotenv import load_dotenv
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import logging
+import traceback # Added traceback
 
 import models
 import schemas
-from admin_template import ADMIN_HTML
-from index_template import INDEX_HTML
-from fastapi.responses import HTMLResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-import secrets
-import logging
-
-# ... rest of imports stay the same (handled by replace_file_content logic but we are editing specific lines) ...
-# Actually let's just replace the exact lines:
 from database import engine, get_db
 
 # LINE API Imports
@@ -69,13 +62,25 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],
 )
 
+# --- HTML Serving Code ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__)) # Changed to current file's directory
+
+def get_html_content(filename: str) -> str:
+    filepath = os.path.join(BASE_DIR, filename)
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        logging.error(f"Error reading {filename}: {e}")
+        return "<h1>Error loading page</h1>"
+
 @app.get("/", response_class=HTMLResponse)
 def serve_index_dashboard(request: Request, _ = Depends(authenticate_admin)):
-    return INDEX_HTML
+    return get_html_content("index.html")
 
 @app.get("/index.html", response_class=HTMLResponse)
 def serve_index_dashboard_named(request: Request, _ = Depends(authenticate_admin)):
-    return INDEX_HTML
+    return get_html_content("index.html")
 
 security = HTTPBasic()
 
@@ -92,7 +97,7 @@ def authenticate_admin(credentials: HTTPBasicCredentials = Depends(security)):
 
 @app.get("/admin.html", response_class=HTMLResponse)
 def serve_admin_dashboard(request: Request, _ = Depends(authenticate_admin)):
-    return ADMIN_HTML
+    return get_html_content("admin.html")
 
 # --- Inquiry Endpoints ---
 
