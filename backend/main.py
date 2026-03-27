@@ -63,7 +63,7 @@ app.add_middleware(
 )
 
 # --- HTML Serving Code ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__)) # Changed to current file's directory
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Point to project root
 
 def get_html_content(filename: str) -> str:
     filepath = os.path.join(BASE_DIR, filename)
