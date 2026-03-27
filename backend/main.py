@@ -74,14 +74,6 @@ def get_html_content(filename: str) -> str:
         logging.error(f"Error reading {filename}: {e}")
         return "<h1>Error loading page</h1>"
 
-@app.get("/", response_class=HTMLResponse)
-def serve_index_dashboard(request: Request, _ = Depends(authenticate_admin)):
-    return get_html_content("index.html")
-
-@app.get("/index.html", response_class=HTMLResponse)
-def serve_index_dashboard_named(request: Request, _ = Depends(authenticate_admin)):
-    return get_html_content("index.html")
-
 security = HTTPBasic()
 
 def authenticate_admin(credentials: HTTPBasicCredentials = Depends(security)):
@@ -105,6 +97,15 @@ def authenticate_admin(credentials: HTTPBasicCredentials = Depends(security)):
             headers={"WWW-Authenticate": "Basic realm=\"HubCargo Admin Dashboard\""},
         )
     return credentials.username
+
+@app.get("/", response_class=HTMLResponse)
+def serve_index_dashboard(request: Request, _ = Depends(authenticate_admin)):
+    return get_html_content("index.html")
+
+@app.get("/index.html", response_class=HTMLResponse)
+def serve_index_dashboard_named(request: Request, _ = Depends(authenticate_admin)):
+    return get_html_content("index.html")
+
 
 @app.get("/admin.html", response_class=HTMLResponse)
 def serve_admin_dashboard(request: Request, _ = Depends(authenticate_admin)):
