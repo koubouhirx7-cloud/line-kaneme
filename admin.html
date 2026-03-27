@@ -586,22 +586,14 @@
             
             const groupBy = document.getElementById('archive-grouping') ? document.getElementById('archive-grouping').value : 'month';
             const groups = {};
+            const recentHTML = [];
+            const now = Date.now();
+            const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
             completedInquiries.forEach(req => {
-                const dateObj = new Date(req.updated_at || req.created_at || Date.now());
-                let groupKey = '';
-                
-                if (groupBy === 'year') {
-                    groupKey = `${dateObj.getFullYear()}年`;
-                } else if (groupBy === 'week') {
-                    groupKey = getWeekNumberString(dateObj);
-                } else {
-                    // Default to month
-                    groupKey = `${dateObj.getFullYear()}年${String(dateObj.getMonth() + 1).padStart(2, '0')}月`;
-                }
+                const dateObj = new Date(req.updated_at || req.created_at || now);
+                const isRecent = (now - dateObj.getTime()) < ONE_DAY_MS;
 
-                if (!groups[groupKey]) groups[groupKey] = [];
-                
                 const badge = `<span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1 flex-shrink-0">完了</span>`;
                 const cardHtml = `
                     <div id="completed-card-${req.id}" onclick="toggleCompletedCard('${req.id}')" class="bg-white border border-gray-200 rounded-lg shadow-sm p-3 mb-3 relative group cursor-pointer hover:bg-gray-50 transition-colors">
@@ -619,13 +611,43 @@
                         <p class="text-[11px] text-gray-600 truncate mb-2 bg-gray-50 p-1 rounded card-detail">内容: ${req.detail}</p>
                     </div>
                 `;
-                groups[groupKey].push(cardHtml);
+
+                if (isRecent) {
+                    recentHTML.push(cardHtml);
+                } else {
+                    let groupKey = '';
+                    if (groupBy === 'year') {
+                        groupKey = `${dateObj.getFullYear()}年`;
+                    } else if (groupBy === 'week') {
+                        groupKey = getWeekNumberString(dateObj);
+                    } else {
+                        groupKey = `${dateObj.getFullYear()}年${String(dateObj.getMonth() + 1).padStart(2, '0')}月`;
+                    }
+                    if (!groups[groupKey]) groups[groupKey] = [];
+                    groups[groupKey].push(cardHtml);
+                }
             });
 
-            // Sort group keys descending
             const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
             
             let html = '';
+            
+            if (recentHTML.length > 0) {
+                html += `
+                    <div class="mb-5">
+                        <div class="text-xs font-bold text-gray-500 mb-2 px-1 flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            直近24時間以内の完了案件
+                        </div>
+                        ${recentHTML.join('')}
+                    </div>
+                `;
+            }
+
+            if (sortedKeys.length > 0) {
+                html += `<div class="text-xs font-bold text-gray-500 mb-2 px-1 mt-4">アーカイブ</div>`;
+            }
+
             sortedKeys.forEach(key => {
                 const safeId = key.replace(/[^\w-]/g, '-');
                 const isOpen = window.openGroups.has(safeId);
@@ -634,9 +656,9 @@
 
                 html += `
                     <div class="mb-4">
-                        <button onclick="toggleGroup('${safeId}')" class="w-full flex justify-between items-center bg-emerald-50 px-3 py-2 rounded shadow-sm text-sm font-bold text-emerald-800 mb-2 transition border border-emerald-100 outline-none">
-                            <span>📅 ${key} <span class="text-xs font-normal ml-1">(${groups[key].length}件)</span></span>
-                            <svg id="icon-${safeId}" class="w-4 h-4 transition-transform duration-200 transform text-emerald-600 ${rotateClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <button onclick="toggleGroup('${safeId}')" class="w-full flex justify-between items-center bg-gray-100 px-3 py-2 rounded shadow-sm text-sm font-bold text-gray-700 mb-2 transition border border-gray-200 outline-none">
+                            <span>🗄️ ${key} <span class="text-xs font-normal ml-1">(${groups[key].length}件)</span></span>
+                            <svg id="icon-${safeId}" class="w-4 h-4 transition-transform duration-200 transform text-gray-500 ${rotateClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
                         <div id="group-${safeId}" class="space-y-3 transition-all duration-300 ${hiddenClass}">
                             ${groups[key].join('')}
