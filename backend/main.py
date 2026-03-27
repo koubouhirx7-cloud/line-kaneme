@@ -42,7 +42,16 @@ configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 # Create DB tables
+
 models.Base.metadata.create_all(bind=engine)
+
+from sqlalchemy import text
+try:
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE inquiries ADD COLUMN reminder_sent BOOLEAN DEFAULT FALSE"))
+except Exception:
+    pass
+
 
 app = FastAPI(title="HubCargo Delivery API")
 
