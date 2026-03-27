@@ -666,7 +666,7 @@
                               `<span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">受付済</span>`;
                               
                 const btnState = req.status === 'received' ? 
-                    `<button onclick='goToDispatch(${JSON.stringify(req).replace(/'/g, "&apos;")})' class="w-full bg-indigo-600 text-white py-1.5 rounded text-xs font-bold hover:bg-indigo-700 transition shadow-sm mt-2">データを確認して協力会社の手配へ</button>` :
+                    `<button onclick="goToDispatchById('${req.id}')" class="w-full bg-indigo-600 text-white py-1.5 rounded text-xs font-bold hover:bg-indigo-700 transition shadow-sm mt-2">データを確認して協力会社の手配へ</button>` :
                     req.status === 'dispatched' ? `
                         <div class="flex gap-2 mt-2">
                             <div class="flex-1 bg-gray-100 text-gray-500 py-1.5 rounded text-xs font-bold text-center border border-gray-200 flex items-center justify-center">報告待ち</div>
@@ -824,6 +824,15 @@
         // ==========================
         // Dispatch Flow
         // ==========================
+        function goToDispatchById(id) {
+            const inquiry = window.lastInquiries.find(i => String(i.id) === String(id));
+            if (inquiry) {
+                goToDispatch(inquiry);
+            } else {
+                alert("指定されたデータが見つかりません。画面を更新してください。");
+            }
+        }
+
         function goToDispatch(inquiry) {
             updateProgress(3);
             currentData = inquiry;
