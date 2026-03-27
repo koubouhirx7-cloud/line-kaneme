@@ -12,6 +12,14 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import models
 import schemas
 from admin_template import ADMIN_HTML
+from index_template import INDEX_HTML
+from fastapi.responses import HTMLResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import secrets
+import logging
+
+# ... rest of imports stay the same (handled by replace_file_content logic but we are editing specific lines) ...
+# Actually let's just replace the exact lines:
 from database import engine, get_db
 
 # LINE API Imports
@@ -61,9 +69,13 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],
 )
 
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to HubCargo Delivery API"}
+@app.get("/", response_class=HTMLResponse)
+def serve_index_dashboard(request: Request, _ = Depends(authenticate_admin)):
+    return INDEX_HTML
+
+@app.get("/index.html", response_class=HTMLResponse)
+def serve_index_dashboard_named(request: Request, _ = Depends(authenticate_admin)):
+    return INDEX_HTML
 
 security = HTTPBasic()
 

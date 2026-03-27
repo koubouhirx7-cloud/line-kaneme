@@ -14,8 +14,9 @@
     { "src": "/api/(.*)", "dest": "api/index.py" },
     { "src": "/webhook/line", "dest": "api/index.py" },
     { "src": "/admin.html", "dest": "api/index.py" },
+    { "src": "/index.html", "dest": "api/index.py" },
+    { "src": "/", "dest": "api/index.py" },
     { "src": "/complete.html", "dest": "/complete.html" },
-    { "src": "/liff.html", "dest": "/liff.html" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    { "src": "/liff.html", "dest": "/liff.html" }
   ]
 }
