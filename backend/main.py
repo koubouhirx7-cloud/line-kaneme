@@ -85,8 +85,19 @@ def serve_index_dashboard_named(request: Request, _ = Depends(authenticate_admin
 security = HTTPBasic()
 
 def authenticate_admin(credentials: HTTPBasicCredentials = Depends(security)):
-    correct_username = secrets.compare_digest(credentials.username, os.getenv("ADMIN_USER", "admin"))
-    correct_password = secrets.compare_digest(credentials.password, os.getenv("ADMIN_PASSWORD", "hubcargo2026"))
+    admin_user = os.getenv("ADMIN_USER")
+    admin_password = os.getenv("ADMIN_PASSWORD")
+
+    if not admin_user or not admin_password:
+        logging.error("ADMIN_USER or ADMIN_PASSWORD environment variables are not set!")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Server configuration error. Authentication unavailable."
+        )
+
+    correct_username = secrets.compare_digest(credentials.username, admin_user)
+    correct_password = secrets.compare_digest(credentials.password, admin_password)
+    
     if not (correct_username and correct_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
