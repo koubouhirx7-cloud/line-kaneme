@@ -590,9 +590,14 @@
             const now = Date.now();
             const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
+            if (!window.expandedCards) window.expandedCards = new Set();
+
             completedInquiries.forEach(req => {
                 const dateObj = new Date(req.updated_at || req.created_at || now);
                 const isRecent = (now - dateObj.getTime()) < ONE_DAY_MS;
+
+                const isExpanded = window.expandedCards.has(String(req.id));
+                const textClass = isExpanded ? 'whitespace-pre-wrap' : 'truncate';
 
                 const badge = `<span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1 flex-shrink-0">完了</span>`;
                 const cardHtml = `
@@ -606,9 +611,9 @@
                                 </button>
                             </div>
                         </div>
-                        <p class="text-[10px] text-gray-500 truncate mb-1 card-detail">ご住所: ${req.pickup_location}</p>
-                        <p class="text-[10px] text-gray-500 truncate mb-2 card-detail">お荷物番号: ${req.delivery_location}</p>
-                        <p class="text-[11px] text-gray-600 truncate mb-2 bg-gray-50 p-1 rounded card-detail">内容: ${req.detail}</p>
+                        <p class="text-[10px] text-gray-500 ${textClass} mb-1 card-detail">ご住所: ${req.pickup_location}</p>
+                        <p class="text-[10px] text-gray-500 ${textClass} mb-2 card-detail">お荷物番号: ${req.delivery_location}</p>
+                        <p class="text-[11px] text-gray-600 ${textClass} mb-2 bg-gray-50 p-1 rounded card-detail">内容: ${req.detail}</p>
                     </div>
                 `;
 
@@ -673,9 +678,20 @@
         function toggleCompletedCard(id) {
             const card = document.getElementById(`completed-card-${id}`);
             if (!card) return;
+            
+            if (!window.expandedCards) window.expandedCards = new Set();
+            const stringId = String(id);
+            const isCurrentlyExpanded = window.expandedCards.has(stringId);
+            
+            if (isCurrentlyExpanded) {
+                window.expandedCards.delete(stringId);
+            } else {
+                window.expandedCards.add(stringId);
+            }
+
             const contents = card.querySelectorAll('.card-detail');
             contents.forEach(el => {
-                if (el.classList.contains('truncate')) {
+                if (!isCurrentlyExpanded) {
                     el.classList.remove('truncate');
                     el.classList.add('whitespace-pre-wrap');
                 } else {
