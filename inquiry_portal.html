@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>お問い合わせ・ご依頼窓口</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: transparent; /* Allows seamless iframe embedding */
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-800 bg-gray-50 flex items-center justify-center min-h-screen py-10 px-4">
+
+    <!-- This container is designed to look good standalone or embedded in an iframe on an existing site -->
+    <div class="max-w-2xl w-full bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+        <!-- Header Banner -->
+        <div class="bg-indigo-600 px-8 py-10 text-center relative overflow-hidden">
+            <div class="absolute inset-0 bg-indigo-700 opacity-50" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px;"></div>
+            <div class="relative z-10">
+                <span class="inline-block py-1 px-3 rounded-full bg-indigo-500 text-indigo-100 text-xs font-bold tracking-widest mb-4">
+                    CUSTOMER PORTAL
+                </span>
+                <h1 class="text-2xl md:text-3xl font-black text-white mb-2">
+                    配送のお問い合わせ・ご依頼
+                </h1>
+                <p class="text-indigo-100 text-sm md:text-base">
+                    ご希望の受付方法をお選びください。<br class="hidden md:block">24時間いつでもオンラインで承ります。
+                </p>
+            </div>
+        </div>
+
+        <!-- Options Container -->
+        <div class="p-8 md:p-12 space-y-6">
+            
+            <!-- Option: LINE -->
+            <a href="/liff.html" target="_parent" class="block group relative bg-white border-2 border-green-100 hover:border-[#06C755] rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:shadow-green-100 cursor-pointer">
+                <div class="flex items-start md:items-center flex-col md:flex-row gap-6">
+                    <div class="flex-shrink-0 w-16 h-16 bg-[#06C755] rounded-2xl flex items-center justify-center shadow-md transform group-hover:scale-105 transition-transform duration-300">
+                        <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M22.5 10.9c0-4.6-4.7-8.4-10.5-8.4S1.5 6.3 1.5 10.9c0 4.1 3.8 7.6 9.1 8.3 0.4 0.1 0.9 0.2 1 0.5 0.1 0.3 0 0.8-0.1 1.2-0.1 0.3-0.4 1.4-0.4 1.6-0.1 0.3-0.1 0.5 0.2 0.7 0.3 0.1 0.6 0.2 1 0 0.3-0.2 1.6-0.9 2.2-1.3 2-1.4 3.9-3.2 5.1-5.3 1.1-1.8 1.4-3.8 1.4-5.7z"/></svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-3 mb-2">
+                            <h2 class="text-xl font-bold text-gray-900 group-hover:text-[#06C755] transition-colors">LINEから依頼する</h2>
+                            <span class="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider">推奨 / 最速</span>
+                        </div>
+                        <p class="text-gray-500 text-sm leading-relaxed mb-3">
+                            普段お使いのLINEアプリから、チャット形式で簡単に依頼できます。次回からの情報入力も省略できて大変便利です。
+                        </p>
+                        <ul class="flex flex-wrap gap-2">
+                            <li class="bg-gray-50 text-gray-600 text-xs px-2 py-1 rounded inline-flex items-center border border-gray-100"><span class="text-[#06C755] mr-1">✔</span> 友達追加で即完了</li>
+                            <li class="bg-gray-50 text-gray-600 text-xs px-2 py-1 rounded inline-flex items-center border border-gray-100"><span class="text-[#06C755] mr-1">✔</span> 写真も送れる</li>
+                        </ul>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Option: Web Form -->
+            <a href="/index.html" target="_parent" class="block group relative bg-white border-2 border-blue-50 hover:border-indigo-500 rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:shadow-blue-50 cursor-pointer">
+                <div class="flex items-start md:items-center flex-col md:flex-row gap-6">
+                    <div class="flex-shrink-0 w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-md transform group-hover:scale-105 transition-transform duration-300">
+                        <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-3 mb-2">
+                            <h2 class="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">Webフォームから依頼する</h2>
+                        </div>
+                        <p class="text-gray-500 text-sm leading-relaxed mb-3">
+                            アプリのインストールやアカウント登録は不要です。パソコンやスマートフォンから、ブラウザで直接入力フォームを開きます。
+                        </p>
+                        <ul class="flex flex-wrap gap-2">
+                            <li class="bg-gray-50 text-gray-600 text-xs px-2 py-1 rounded inline-flex items-center border border-gray-100"><span class="text-indigo-600 mr-1">✔</span> 登録不要</li>
+                            <li class="bg-gray-50 text-gray-600 text-xs px-2 py-1 rounded inline-flex items-center border border-gray-100"><span class="text-indigo-600 mr-1">✔</span> PC・スマホ両対応</li>
+                        </ul>
+                    </div>
+                </div>
+            </a>
+            
+            <div class="pt-6 border-t border-gray-100 text-center">
+                <p class="text-xs text-gray-400">
+                    ※お預かりした個人情報は、配送手配およびご連絡の目的にのみ使用いたします。
+                </p>
+            </div>
+            
+        </div>
+    </div>
+    
+</body>
+</html>
