@@ -16,6 +16,7 @@ class InquiryResponse(InquiryBase):
     id: str
     status: str
     dispatched_to_partner_id: Optional[int] = None
+    reminder_sent: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
 

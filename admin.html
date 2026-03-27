@@ -444,6 +444,9 @@
                 window.lastInquiries = inquiries;
                 renderInbox(inquiries);
                 renderCompletedGroups();
+                
+                // Silent trigger for 30-minute automated reminders
+                fetch(`${API_BASE}/cron/reminders`).catch(e => console.log('Reminder check skipped', e));
             } catch (err) {
                 console.error("Failed to load inquiries", err);
             }
