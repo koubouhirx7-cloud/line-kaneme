@@ -33,17 +33,17 @@
 
                 <div class="mb-4">
                     <label class="block font-bold text-gray-700 text-[13px] mb-1.5">電話番号 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
-                    <input type="tel" id="custPhone" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 090-1234-5678">
+                    <input type="tel" id="custPhone" oninput="this.value = toHalfWidth(this.value)" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 090-1234-5678">
                 </div>
 
                 <div class="mb-4">
                     <label class="block font-bold text-gray-700 text-[13px] mb-1.5">引取先ご住所など <span class="text-red-500 text-[10px] ml-1">必須</span></label>
-                    <input type="text" id="custFrom" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 東京都千代田区〜">
+                    <input type="text" id="custFrom" oninput="this.value = toHalfWidth(this.value)" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 東京都千代田区〜">
                 </div>
 
                 <div class="mb-4">
                     <label class="block font-bold text-gray-700 text-[13px] mb-1.5">納品先・お荷物詳細など <span class="text-red-500 text-[10px] ml-1">必須</span></label>
-                    <input type="text" id="custTo" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 1234-5678-9012">
+                    <input type="text" id="custTo" oninput="this.value = toHalfWidth(this.value)" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 1234-5678-9012">
                 </div>
 
                 <div class="mb-8">
@@ -115,6 +115,13 @@
     </div>
 
     <script>
+        // 全角英数字を半角に変換するユーティリティ関数
+        function toHalfWidth(str) {
+            return str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
+                return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+            }).replace(/[−－]/g, '-');
+        }
+
         function closeAppBrowser() {
             // Attempt to close the window normally
             window.open('','_self').close();
