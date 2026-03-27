@@ -159,9 +159,9 @@ def dispatch_inquiry(inquiry_id: str, request_data: schemas.DispatchRequest, bac
     db.commit()
     db.refresh(inquiry)
     
-    # Send LINE message to partner's line_group_id asynchronously
+    # Send LINE message to partner's line_group_id (Must be synchronous on Vercel)
     if partner.line_group_id and LINE_CHANNEL_ACCESS_TOKEN:
-        background_tasks.add_task(send_line_push_message, partner.line_group_id, inquiry, partner)
+        send_line_push_message(partner.line_group_id, inquiry, partner)
     
     return inquiry
 
