@@ -92,67 +92,40 @@
         </div>
     </section>
 
-    <!-- UI Mockup Showcase -->
+    <!-- Interactive Demo Showcase -->
     <section class="py-10 bg-white relative z-20 -mt-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="glass-card rounded-3xl p-4 md:p-8 transform -translate-y-12 animate-fade-in-up flex flex-col items-center" style="animation-delay: 0.2s;">
                 <div class="w-full flex justify-center mb-6 border-b pb-4">
-                     <h2 class="text-2xl font-bold text-center text-gray-800">📊 直感的な管理ダッシュボード</h2>
+                     <h2 class="text-2xl font-bold text-center text-gray-800">🎮 実際に触れるインタラクティブ・デモ</h2>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
-                    <!-- Dashboard Mock -->
-                    <div class="bg-gray-100 rounded-2xl p-4 shadow-inner border border-gray-200 flex flex-col relative overflow-hidden h-96 group hover:shadow-md transition">
-                       <div class="absolute top-0 left-0 w-full bg-dark text-white p-3 flex justify-between items-center rounded-t-xl z-10">
-                           <span class="font-bold text-sm">HubCargo 管理システム</span>
-                           <span class="text-xs opacity-70">管理者</span>
-                       </div>
-                       <div class="pt-14 pb-4 px-2 overflow-y-auto h-full space-y-3">
-                           <!-- Card 1 -->
-                           <div class="bg-white p-3 rounded-lg border-l-4 border-yellow-400 shadow-sm">
-                               <div class="flex justify-between items-center mb-2">
-                                   <span class="font-bold text-sm">株式会社〇〇 様</span>
-                                   <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded font-bold">手配待ち</span>
-                               </div>
-                               <p class="text-xs text-gray-500 mb-1">住所: 東京都千代田区...</p>
-                               <div class="mt-3 flex gap-2">
-                                   <div class="bg-blue-50 text-blue-600 text-xs py-1.5 px-3 rounded text-center flex-1 cursor-not-allowed border border-blue-200">協力会社へ手配 (LINE)</div>
-                               </div>
-                           </div>
-                           <!-- Card 2 -->
-                           <div class="bg-white p-3 rounded-lg border-l-4 border-blue-500 shadow-sm opacity-70">
-                               <div class="flex justify-between items-center mb-2">
-                                   <span class="font-bold text-sm">田中 太郎 様</span>
-                                   <span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded font-bold">配車完了</span>
-                               </div>
-                               <p class="text-xs text-gray-500">住所: 神奈川県横浜市...</p>
-                               <p class="text-xs text-gray-400 mt-1">→ 担当: 第一運輸Grp</p>
-                           </div>
-                       </div>
+                <!-- 実際のモックアップIframe -->
+                <div class="w-full bg-gray-50 rounded-2xl overflow-hidden shadow-inner border border-gray-200">
+                    <!-- デスクトップで全体が見えるように、スマホではスクロール対応に -->
+                    <div class="overflow-x-auto w-full">
+                        <iframe src="/demo_app.html" 
+                                class="border-0 bg-transparent min-w-[1100px] w-full h-[850px]"
+                                title="Interactive Demo">
+                        </iframe>
                     </div>
-                    
-                    <!-- Explanation -->
-                    <div class="flex flex-col justify-center space-y-6">
-                        <div class="flex gap-4">
-                            <div class="flex-shrink-0 w-12 h-12 bg-green-100 text-primary rounded-full flex items-center justify-center text-xl font-bold">1</div>
-                            <div>
-                                <h3 class="text-lg font-bold mb-2">ブラウザで開くだけ</h3>
-                                <p class="text-sm text-gray-600 leading-relaxed">専用アプリのインストールは不要。PCでもスマホでも、ブラウザを開くだけで即座にリアルタイムな受発注状況を確認できます。</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="flex-shrink-0 w-12 h-12 bg-green-100 text-primary rounded-full flex items-center justify-center text-xl font-bold">2</div>
-                            <div>
-                                <h3 class="text-lg font-bold mb-2">顧客情報は自動反映</h3>
-                                <p class="text-sm text-gray-600 leading-relaxed">顧客がLINEから入力した配送依頼データが、秒単位で自動的にダッシュボードへ同期されます。</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="flex-shrink-0 w-12 h-12 bg-green-100 text-primary rounded-full flex items-center justify-center text-xl font-bold">3</div>
-                            <div>
-                                <h3 class="text-lg font-bold mb-2">ワンタップで協力会社へ</h3>
-                                <p class="text-sm text-gray-600 leading-relaxed">案件を選んで「協力会社へ手配」を押すだけで、自動生成された手配テキストが提携運送会社のLINEグループへ自動送信されます。</p>
-                            </div>
-                        </div>
+                </div>
+                
+                <!-- Explanation Area Below -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl mt-10">
+                    <div class="flex flex-col items-center text-center p-4">
+                        <div class="w-12 h-12 bg-green-100 text-primary rounded-full flex items-center justify-center text-xl font-bold mb-4">1</div>
+                        <h3 class="text-lg font-bold mb-2">顧客スマホを操作</h3>
+                        <p class="text-sm text-gray-600 leading-relaxed">左の画面のリッチメニューから「お問い合わせ」を押し、LINE LIFFで配送依頼を送信してみてください。</p>
+                    </div>
+                    <div class="flex flex-col items-center text-center p-4">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4">2</div>
+                        <h3 class="text-lg font-bold mb-2">ダッシュボードで手配</h3>
+                        <p class="text-sm text-gray-600 leading-relaxed">自動で画面が切り替わり、中央の「管理画面」に依頼が届きます。「手配」タブから協力会社へデータをお送りください。</p>
+                    </div>
+                    <div class="flex flex-col items-center text-center p-4">
+                        <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xl font-bold mb-4">3</div>
+                        <h3 class="text-lg font-bold mb-2">協力会社へ即時共有</h3>
+                        <p class="text-sm text-gray-600 leading-relaxed">右の協力会社のグループLINEに、自動で整形された美しい配車依頼メッセージが届くのを体験できます。</p>
                     </div>
                 </div>
             </div>
