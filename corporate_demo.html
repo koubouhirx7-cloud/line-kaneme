@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>未来運輸株式会社 - フューチャー・ロジスティクス</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-pattern {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.3;
+        }
+
+        .blob {
+            position: absolute;
+            filter: blur(80px);
+            opacity: 0.4;
+            z-index: 0;
+            border-radius: 50%;
+            animation: float 10s infinite ease-in-out alternate;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, -50px) scale(1.1); }
+        }
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-nav transition-all duration-300 shadow-sm top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-xl shadow-lg">M</div>
+                    <span class="font-black text-xl tracking-tight text-gray-900">未来運輸株式会社</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#" class="text-gray-600 hover:text-indigo-600 font-bold text-sm transition">トップ</a>
+                    <a href="#" class="text-gray-600 hover:text-indigo-600 font-bold text-sm transition">会社概要</a>
+                    <a href="#" class="text-gray-600 hover:text-indigo-600 font-bold text-sm transition">事業内容</a>
+                    <a href="#inquiry-section" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-full font-bold text-sm tracking-wide shadow-md hover:shadow-lg transition">
+                        お問い合わせ・ご依頼
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient min-h-[90vh] flex items-center pt-20 relative">
+        <div class="hero-pattern"></div>
+        <div class="blob w-96 h-96 bg-blue-500 top-20 left-10"></div>
+        <div class="blob w-80 h-80 bg-purple-500 bottom-10 right-20" style="animation-delay: -5s;"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="text-white">
+                    <span class="inline-block py-1 px-3 rounded-full bg-white/10 border border-white/20 text-blue-200 text-xs font-bold tracking-widest mb-6 backdrop-blur-sm">
+                        次世代の物流ソリューション
+                    </span>
+                    <h1 class="text-4xl md:text-6xl font-black leading-tight mb-6">
+                        モノを運ぶ、<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">未来を創る。</span>
+                    </h1>
+                    <p class="text-lg md:text-xl text-blue-100 mb-10 leading-relaxed max-w-lg font-light">
+                        最新のデジタルトランスフォーメーションで、安全・確実・スピーディーな配送を実現。お客様の荷物と一緒に「安心」をお届けします。
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="#inquiry-section" class="inline-flex justify-center items-center bg-white text-indigo-900 hover:bg-gray-50 border-0 py-3.5 px-8 focus:outline-none rounded-full text-base font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)] transition transform hover:-translate-y-1">
+                            今すぐ集荷を依頼する
+                            <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="hidden md:block relative">
+                    <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Logistics Truck" class="rounded-2xl shadow-2xl border-4 border-white/10" style="filter: brightness(0.9);">
+                    <div class="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-xl border border-gray-100 flex items-center gap-4">
+                        <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-2xl">🌱</div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-bold">エコドライブ宣言</p>
+                            <p class="text-lg font-black text-gray-900">CO2削減達成企業</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Problem & Solution -->
+    <section class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-black text-gray-900 mb-4">配送をもっとスマートに</h2>
+            <p class="text-gray-500 mb-16 max-w-2xl mx-auto">私たちは最新のシステムを導入し、お客様からのご依頼をリアルタイムで手配します。電話での煩わしい手続きはもう不要です。</p>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="p-8 rounded-2xl bg-gray-50 border border-gray-100 card-hover">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6">📱</div>
+                    <h3 class="text-xl font-bold mb-3">スマホから簡単依頼</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">LINEやWebフォームから、いつでもどこでもすぐに集荷依頼やお問い合わせが可能です。</p>
+                </div>
+                <div class="p-8 rounded-2xl bg-gray-50 border border-gray-100 card-hover">
+                    <div class="w-16 h-16 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6">⚡</div>
+                    <h3 class="text-xl font-bold mb-3">リアルタイムマッチング</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">ご依頼内容は即座に運行管理システムへ連携され、最適なドライバーが最短ルートで急行します。</p>
+                </div>
+                <div class="p-8 rounded-2xl bg-gray-50 border border-gray-100 card-hover">
+                    <div class="w-16 h-16 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6">🛡️</div>
+                    <h3 class="text-xl font-bold mb-3">安全確実なお届け</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">熟練のドライバーと最新の管理システムで、大切なお荷物を目的地まで確実にお届けします。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- INQUIRY INTEGRATION SECTION -->
+    <section id="inquiry-section" class="py-24 bg-slate-50 relative overflow-hidden">
+        <div class="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-indigo-100 rounded-full blur-3xl opacity-50"></div>
+        <div class="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-blue-100 rounded-full blur-3xl opacity-50"></div>
+        
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16">
+                <span class="text-indigo-600 font-bold tracking-widest text-sm mb-2 block">CONTACT & REQUEST</span>
+                <h2 class="text-3xl md:text-4xl font-black text-gray-900 mb-6">集荷のご依頼・お問い合わせ</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    未来運輸では、お客様の利便性向上のため、**2つのデジタル窓口**をご用意しております。
+                    お好きな方法を選んで、今すぐシステムをご体験ください。
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Option 1: LINE LIFF Integration -->
+                <div class="bg-white rounded-3xl p-8 border border-green-100 shadow-xl relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+                    <div class="w-14 h-14 bg-[#06C755] rounded-xl flex items-center justify-center mb-6 relative z-10 shadow-lg shadow-green-200">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M22.5 10.9c0-4.6-4.7-8.4-10.5-8.4S1.5 6.3 1.5 10.9c0 4.1 3.8 7.6 9.1 8.3 0.4 0.1 0.9 0.2 1 0.5 0.1 0.3 0 0.8-0.1 1.2-0.1 0.3-0.4 1.4-0.4 1.6-0.1 0.3-0.1 0.5 0.2 0.7 0.3 0.1 0.6 0.2 1 0 0.3-0.2 1.6-0.9 2.2-1.3 2-1.4 3.9-3.2 5.1-5.3 1.1-1.8 1.4-3.8 1.4-5.7z"/></svg>
+                    </div>
+                    <h3 class="text-2xl font-black text-gray-900 mb-3 relative z-10">LINEから超簡単依頼</h3>
+                    <p class="text-gray-500 mb-6 relative z-10 text-sm leading-relaxed">
+                        いつもお使いのLINEから、たった1分で依頼完了！<br>
+                        当社の公式チャットボットが応答します。
+                    </p>
+                    <ul class="space-y-2 mb-8 relative z-10">
+                        <li class="flex items-center text-sm text-gray-600 font-bold">
+                            <svg class="w-4 h-4 text-[#06C755] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            名前・住所入力がラク
+                        </li>
+                        <li class="flex items-center text-sm text-gray-600 font-bold">
+                            <svg class="w-4 h-4 text-[#06C755] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            写真や位置情報も送れる
+                        </li>
+                    </ul>
+                    <a href="/liff.html" target="_blank" class="block w-full text-center bg-[#06C755] hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl transition shadow-lg shadow-green-200 relative z-10 transform group-hover:-translate-y-1">
+                        LINEで依頼する（デモ）
+                    </a>
+                    <p class="text-center text-[10px] text-gray-400 mt-3 relative z-10">※LIFFアプリのモック画面が開きます</p>
+                </div>
+
+                <!-- Option 2: Web Form Integration -->
+                <div class="bg-white rounded-3xl p-8 border border-blue-100 shadow-xl relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+                    <div class="w-14 h-14 bg-indigo-600 rounded-xl flex items-center justify-center mb-6 relative z-10 shadow-lg shadow-indigo-200">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-black text-gray-900 mb-3 relative z-10">Webフォームから依頼</h3>
+                    <p class="text-gray-500 mb-6 relative z-10 text-sm leading-relaxed">
+                        アカウント登録不要！<br>
+                        PCやブラウザから直接、手軽にご依頼いただけます。
+                    </p>
+                    <ul class="space-y-2 mb-8 relative z-10">
+                        <li class="flex items-center text-sm text-gray-600 font-bold">
+                            <svg class="w-4 h-4 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            PC・スマホ両対応
+                        </li>
+                        <li class="flex items-center text-sm text-gray-600 font-bold">
+                            <svg class="w-4 h-4 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            その場ですぐ送信可能
+                        </li>
+                    </ul>
+                    
+                    <!-- Direct iframe integration concept -->
+                    <a href="/index.html" target="_blank" class="block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition shadow-lg shadow-indigo-200 relative z-10 transform group-hover:-translate-y-1">
+                        Webフォームを開く
+                    </a>
+                    <p class="text-center text-[10px] text-gray-400 mt-3 relative z-10">※本番のAPIへ直結したフォームが開きます</p>
+                </div>
+            </div>
+            
+            <div class="mt-16 bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-2xl">💡</div>
+                    <div>
+                        <h4 class="font-bold text-gray-900 mb-2">【組み込みイメージ解説】</h4>
+                        <p class="text-sm text-gray-600">
+                            このように、貴社の**既存ホームページ・コーポレートサイト内**に、HubCargoシステムへの入り口となるボタンやリンクを設置することで、エンドユーザー（お客様）をスムーズに最新の受付システムへと誘導することができます。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 text-gray-400 py-12 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-xl font-bold text-white mb-4">未来運輸株式会社</h2>
+            <p class="text-sm mb-6">〒100-0000 東京都千代田区物流1-2-3</p>
+            <p class="text-xs">&copy; 2026 Future Logistics Inc. & HubCargo Demo. All rights reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
