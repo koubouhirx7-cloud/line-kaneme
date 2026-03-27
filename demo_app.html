@@ -647,8 +647,9 @@
                     `<button onclick='goToDispatch(${JSON.stringify(req).replace(/'/g, "&apos;")})' class="w-full bg-indigo-600 text-white py-1.5 rounded text-xs font-bold hover:bg-indigo-700 transition shadow-sm mt-2">データを確認して協力会社の手配へ</button>` :
                     req.status === 'dispatched' ? `<button disabled class="w-full bg-gray-300 text-gray-500 py-1.5 rounded text-xs font-bold transition shadow-sm mt-2 cursor-not-allowed">手配済み (完了報告待ち)</button>` : '';
 
+                const bgClass = req.status === 'dispatched' ? 'bg-gray-50' : 'bg-white';
                 const cardHtml = `
-                    <div class="bg-white ${req.status==='received' ? 'border-l-4 border-blue-500' : 'border border-gray-200'} rounded-lg shadow-sm p-3 mb-3 ${isNew ? 'new-request-anim' : ''}">
+                    <div class="${bgClass} ${req.status==='received' ? 'border-l-4 border-blue-500 shadow-md' : 'border border-gray-200 shadow-sm'} rounded-lg p-3 mb-3 ${isNew ? 'new-request-anim' : ''}">
                         <div class="flex justify-between border-b pb-1 mb-2">
                             <span class="font-bold text-sm text-gray-800">${req.customer_name} 様 <span class="text-gray-400 text-[10px] ml-1">${req.id}</span></span>
                             <div>${badge}</div>
