@@ -144,7 +144,7 @@
             <div class="flex items-center" id="nav-step-2">
                 <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-sm step-inactive transition-colors duration-300"
                     id="circle-2">2</div>
-                <div class="ml-2 text-sm font-bold text-gray-400" id="text-2">要カーゴ受信</div>
+                <div class="ml-2 text-sm font-bold text-gray-400" id="text-2">デモロジ受信</div>
             </div>
             <div class="flex-1 h-1 mx-4 bg-gray-200 rounded transition-colors duration-300" id="line-2"></div>
 
@@ -184,7 +184,7 @@
                     <div class="bg-[#273246] text-white flex items-center px-4 py-2 shadow-md z-10">
                         <span class="text-lg mr-2 cursor-pointer">〈</span>
                         <div class="flex-1">
-                            <h2 class="font-bold text-sm">要カーゴ 公式LINE</h2>
+                            <h2 class="font-bold text-sm">デモロジ 公式LINE</h2>
                         </div>
                     </div>
                     <div class="line-bg flex-1 p-3 overflow-y-auto flex flex-col relative" id="customerChat">
@@ -258,12 +258,12 @@
             </div>
 
             <!-- =======================
-             [STEP 2 & 3] 要カーゴ ダッシュボード
+             [STEP 2 & 3] デモロジ ダッシュボード
              ======================= -->
             <div class="flex flex-col items-center relative">
                 <div
                     class="bg-slate-800 text-white px-4 py-1.5 rounded-full text-xs font-bold mb-3 shadow-sm z-10 flex gap-2">
-                    <span id="badge-step-2" class="text-yellow-300">STEP 2: 要カーゴ (受信)</span>
+                    <span id="badge-step-2" class="text-yellow-300">STEP 2: デモロジ (受信)</span>
                     <span id="badge-step-3" class="opacity-50">/ STEP 3: (手配)</span>
                 </div>
 
@@ -339,7 +339,7 @@
                                                 class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm">
                                                 🏙️</div>
                                             <div class="text-left">
-                                                <h4 class="font-bold text-sm">ファーストリンク</h4>
+                                                <h4 class="font-bold text-sm">第一配送ルート</h4>
                                                 <p class="text-[9px] text-gray-500">関東エリア</p>
                                             </div>
                                         </div>
@@ -504,7 +504,7 @@
                     <div class="bg-[#273246] text-white flex items-center px-4 py-2 shadow-md z-10">
                         <span class="text-lg mr-2 cursor-pointer">〈</span>
                         <div class="flex-1">
-                            <h2 class="font-bold text-sm">ファーストリンク配車Grp</h2>
+                            <h2 class="font-bold text-sm">第一配送ルート配車Grp</h2>
                         </div>
                     </div>
                     <div class="line-bg flex-1 p-3 overflow-y-auto flex flex-col relative" id="partnerChat">
@@ -513,7 +513,7 @@
                                 class="bg-black/20 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-sm">今日</span>
                         </div>
                         <div class="text-center text-[10px] text-white/70 py-10" id="partnerEmpty">
-                            要カーゴからの依頼待ち...
+                            デモロジからの依頼待ち...
                         </div>
                     </div>
                     <div class="bg-gray-100 p-2 border-t flex items-center gap-2 px-3 pb-4 z-10">
@@ -537,7 +537,7 @@
         // ==========================
         let currentData = null; 
         let mockPartners = [
-            { id: 1, name: "株式会社ファーストリンク", line_group_id: "Grp_first", icon_emoji: "🏙️" },
+            { id: 1, name: "株式会社第一配送ルート", line_group_id: "Grp_first", icon_emoji: "🏙️" },
             { id: 2, name: "中央ロジスティクス", line_group_id: "Grp_chuo", icon_emoji: "🚚" }
         ];
         let mockInquiries = [];
@@ -774,7 +774,7 @@
                 const chat = document.getElementById('customerChat');
                 chat.insertAdjacentHTML('beforeend', `
                     <div class="flex mb-4 mt-2">
-                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold mr-2 text-xs shrink-0">要</div>
+                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold mr-2 text-xs shrink-0">デモ</div>
                         <div class="chat-bubble left bg-white rounded-xl rounded-tl-sm shadow-md p-3 text-xs">
                             お問い合わせありがとうございます。確認次第手配を進めます！<br>
                             <span class="text-gray-400 text-[10px]">受付番号: ${inquiry.id}</span>
@@ -856,7 +856,7 @@
                 const chat = document.getElementById('partnerChat');
                 const msgHTML = `
                     <div class="flex mb-4 mt-2 opacity-0 translate-y-4 transition-all duration-300" id="incoming-${currentData.id}">
-                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold mr-2 text-xs shrink-0 shadow-md">要</div>
+                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold mr-2 text-xs shrink-0 shadow-md">デモ</div>
                         <div class="chat-bubble left bg-white rounded-xl rounded-tl-sm shadow-md p-3 text-sm w-full">
                             <div class="bg-blue-600 text-white px-2 py-1 text-[10px] font-bold mb-2 rounded flex-wrap gap-1">
                                 📞 お客様への連絡依頼
