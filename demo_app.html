@@ -532,90 +532,25 @@
     </div>
 
     <script>
-        const API_BASE = '/api';
-        
-        // --- 状態管理・UI更新 ---
-        let currentData = null; // Currently selected inquiry for dispatch
-        let allPartners = [];
-        let pollingInterval = null;
+        // ==========================
+        // Mock State (API不要のローカル実行用)
+        // ==========================
+        let currentData = null; 
+        let mockPartners = [
+            { id: 1, name: "株式会社ファーストリンク", line_group_id: "Grp_first", icon_emoji: "🏙️" },
+            { id: 2, name: "中央ロジスティクス", line_group_id: "Grp_chuo", icon_emoji: "🚚" }
+        ];
+        let mockInquiries = [];
+        let nextInquiryId = 1;
 
         document.addEventListener('DOMContentLoaded', () => {
-            fetchPartners();
-            fetchInquiries();
-            // Start basic polling for inbox (every 10s)
-            pollingInterval = setInterval(fetchInquiries, 10000);
+            renderSettingsPartners(mockPartners);
+            renderDispatchPartnerMenu(mockPartners);
+            renderInbox(mockInquiries);
         });
 
         // ==========================
-        // Data Fetching
-        // ==========================
-        
-        // Settings Modal
-        function openSettings() {
-            document.getElementById('settingsModal').classList.remove('hidden');
-            document.getElementById('settingsModal').classList.add('flex');
-        }
-
-        function closeSettings() {
-            document.getElementById('settingsModal').classList.add('hidden');
-            document.getElementById('settingsModal').classList.remove('flex');
-        }
-
-        async function addNewPartner() {
-            const name = document.getElementById('newPartnerName').value;
-            const lineId = document.getElementById('newPartnerLineId').value;
-            
-            if (!name) {
-                alert("会社名を入力してください");
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/partners', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: name, line_group_id: lineId })
-                });
-
-                if (response.ok) {
-                    alert(`${name} を追加しました！`);
-                    closeSettings();
-                    fetchPartners(); // Refresh list
-                    document.getElementById('newPartnerName').value = '';
-                    document.getElementById('newPartnerLineId').value = '';
-                } else {
-                    alert('追加に失敗しました。');
-                }
-            } catch (error) {
-                console.error('Error adding partner:', error);
-                alert('通信エラーが発生しました。バックエンドが起動しているか確認してください。');
-            }
-        }
-
-
-        async function fetchPartners() {
-            try {
-                const res = await fetch(`${API_BASE}/partners`);
-                allPartners = await res.json();
-                renderSettingsPartners(allPartners);
-                renderDispatchPartnerMenu(allPartners);
-            } catch (err) {
-                console.error("Failed to load partners", err);
-            }
-        }
-
-        async function fetchInquiries() {
-            try {
-                const res = await fetch(`${API_BASE}/inquiries`);
-                const inquiries = await res.json();
-                renderInbox(inquiries);
-            } catch (err) {
-                console.error("Failed to load inquiries", err);
-            }
-        }
-
-        // ==========================
-        // UI Rendering Logic
+        // UI Rendering Logic (そのまま流用)
         // ==========================
         function renderSettingsPartners(partners) {
             const list = document.getElementById('partnerList');
@@ -646,11 +581,9 @@
         }
 
         function renderDispatchPartnerMenu(partners) {
-            // Replace the hardcoded partner select menu in dispatch view
             const container = document.querySelector('#screen-dispatch .flex-1.p-3.overflow-y-auto');
-            if (!container) return; // Prevent errors if DOM missing
+            if (!container) return; 
             
-            // Re-inject the list 
             const headerHTML = `<p class="text-[11px] text-gray-500 mb-2 font-bold">送出先の協力会社を選択</p>`;
             let pHTML = '';
             
@@ -700,7 +633,10 @@
             let inboxHtml = '';
             let completedHtml = '';
             
-            inquiries.forEach((req, idx) => {
+            // 降順に表示するためリバース（モック用）
+            const sortedInquiries = [...inquiries].reverse();
+            
+            sortedInquiries.forEach((req, idx) => {
                 const isNew = idx === 0 && unhandledCount > 0 && req.status === 'received';
                 const badge = req.status === 'completed' ? `<span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">完了</span>` :
                               req.status === 'dispatched' ? `<span class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">手配中</span>` :
@@ -803,14 +739,10 @@
         }
 
         // ==========================
-        // LIFF Form
+        // LIFF Form (MOCK)
         // ==========================
-        function openLiff() {
-            document.getElementById('liffModal').classList.add('open');
-        }
-        function closeLiff() {
-            document.getElementById('liffModal').classList.remove('open');
-        }
+        function openLiff() { document.getElementById('liffModal').classList.add('open'); }
+        function closeLiff() { document.getElementById('liffModal').classList.remove('open'); }
 
         async function submitLiff(event) {
             event.preventDefault();
@@ -818,23 +750,23 @@
             btn.innerText = "送信中...";
             btn.disabled = true;
 
-            const payload = {
+            const newId = `DEMO-YK-${String(nextInquiryId++).padStart(4, '0')}`;
+            const inquiry = {
+                id: newId,
                 customer_name: document.getElementById('df-name').value,
                 phone_number: document.getElementById('df-phone').value,
                 pickup_location: document.getElementById('df-from').value,
                 delivery_location: document.getElementById('df-to').value,
-                detail: document.getElementById('df-detail').value
+                detail: document.getElementById('df-detail').value,
+                status: 'received',
+                created_at: new Date().toISOString()
             };
 
-            try {
-                const res = await fetch(`${API_BASE}/inquiries`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!res.ok) throw new Error("LIFF submission failed");
-                const inquiry = await res.json();
-
+            // Simulate Network Delay
+            setTimeout(() => {
+                mockInquiries.push(inquiry);
+                renderInbox(mockInquiries);
+                
                 closeLiff();
                 btn.innerText = "問い合わせを送信";
                 btn.disabled = false;
@@ -852,18 +784,11 @@
                 chat.scrollTop = chat.scrollHeight;
 
                 updateProgress(2);
-                await fetchInquiries();
-
-            } catch (err) {
-                console.error(err);
-                alert("送信に失敗しました");
-                btn.innerText = "問い合わせを送信";
-                btn.disabled = false;
-            }
+            }, 800);
         }
 
         // ==========================
-        // Dispatch Flow
+        // Dispatch Flow (MOCK)
         // ==========================
         function goToDispatch(inquiry) {
             updateProgress(3);
@@ -877,8 +802,7 @@
             document.getElementById('dispatch-empty').classList.add('hidden');
             document.getElementById('dispatch-content').classList.remove('hidden');
             
-            // Re-render partners menu to ensure reset state
-            renderDispatchPartnerMenu(allPartners);
+            renderDispatchPartnerMenu(mockPartners);
             
             document.getElementById('dashStatus').innerHTML = `
                 <div class="flex items-center gap-2">
@@ -904,20 +828,18 @@
             currentActivePartnerId = document.getElementById(`form-${id}`).classList.contains('open') ? id : null;
         }
 
-        async function sendToPartner(partnerId) {
+        function sendToPartner(partnerId) {
             if (!currentData) return;
             
             const btn = document.getElementById(`btn-send-partner-${partnerId}`);
             btn.innerHTML = '送信中...';
             btn.disabled = true;
 
-            try {
-                const res = await fetch(`${API_BASE}/inquiries/${currentData.id}/dispatch`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ partner_id: partnerId })
-                });
-                if (!res.ok) throw new Error("Dispatch failed");
+            setTimeout(() => {
+                // Update Local State target
+                const req = mockInquiries.find(i => i.id === currentData.id);
+                if(req) req.status = 'dispatched';
+                renderInbox(mockInquiries);
 
                 btn.innerHTML = '✔ 送信完了';
                 btn.classList.replace('bg-blue-600', 'bg-gray-400');
@@ -928,8 +850,6 @@
                 document.getElementById('statusDot').classList.add('animate-pulse');
 
                 updateProgress(4);
-                fetchInquiries(); // Background update inbox
-
                 document.getElementById('partnerEmpty').classList.add('hidden');
                 
                 // Show message on Partner side
@@ -961,22 +881,18 @@
                     const el = document.getElementById(`incoming-${currentData.id}`);
                     if (el) el.classList.remove('opacity-0', 'translate-y-4');
                 }, 50);
-
-            } catch (err) {
-                console.error(err);
-                alert("手配依頼の送信に失敗しました");
-                btn.innerHTML = 'この会社へLINE送信';
-                btn.disabled = false;
-            }
+            }, 600);
         }
 
-        async function reportDone(btn, inquiryId, cardId) {
+        function reportDone(btn, inquiryId, cardId) {
             btn.innerHTML = "報告中...";
             btn.disabled = true;
 
-            try {
-                const res = await fetch(`${API_BASE}/inquiries/${inquiryId}/complete`, { method: 'POST' });
-                if (!res.ok) throw new Error("Complete failed");
+            setTimeout(() => {
+                // Update Local State
+                const req = mockInquiries.find(i => i.id === inquiryId);
+                if(req) req.status = 'completed';
+                renderInbox(mockInquiries);
 
                 btn.innerHTML = "✔ 報告済み";
                 btn.className = "w-full bg-gray-200 text-gray-500 font-bold py-2 rounded shadow-inner text-xs cursor-not-allowed";
@@ -1009,29 +925,19 @@
                     circle.innerHTML = "✓";
                     text.className = "ml-2 text-sm font-bold text-emerald-600";
                 }
-                
-                fetchInquiries(); // Refetch to mark inbox item as completed if they go back
-
-            } catch (err) {
-                console.error(err);
-                alert("完了報告に失敗しました");
-                btn.innerHTML = '連絡完了として報告';
-                btn.disabled = false;
-            }
+            }, 600);
         }
 
         // ==========================
-        // Settings / Custom Partner
+        // Settings / Custom Partner (MOCK)
         // ==========================
-        function openSettings() {
-            document.getElementById('settingsPanel').classList.remove('translate-y-full');
-        }
-        function closeSettings() {
-            document.getElementById('settingsPanel').classList.add('translate-y-full');
+        function openSettings() { document.getElementById('settingsPanel').classList.remove('translate-y-full'); }
+        function closeSettings() { 
+            document.getElementById('settingsPanel').classList.add('translate-y-full'); 
             document.getElementById('addAlert').classList.add('hidden');
         }
 
-        async function addPartner() {
+        function addPartner() {
             const nameInput = document.getElementById('newPartnerName');
             const lineInput = document.getElementById('newPartnerLine');
             const name = nameInput.value.trim();
@@ -1048,41 +954,30 @@
             btn.innerHTML = '追加中...';
             btn.disabled = true;
 
-            try {
-                const res = await fetch(`${API_BASE}/partners`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: name, line_group_id: line, icon_emoji: '🆕' })
-                });
-                if (!res.ok) throw new Error("Add partner failed");
+            setTimeout(() => {
+                const newId = mockPartners.length > 0 ? Math.max(...mockPartners.map(p => p.id)) + 1 : 1;
+                mockPartners.push({ id: newId, name: name, line_group_id: line || '未設定', icon_emoji: '🆕' });
+                
                 nameInput.value = '';
                 lineInput.value = '';
-                await fetchPartners();
-            } catch (err) {
-                console.error(err);
-                alert("協力会社の追加に失敗しました。");
-            } finally {
+                renderSettingsPartners(mockPartners);
+                renderDispatchPartnerMenu(mockPartners);
+
                 btn.innerHTML = '＋ 追加する';
                 btn.disabled = false;
-            }
+            }, 400);
         }
 
-        async function deletePartner(id) {
+        function deletePartner(id) {
             if (confirm('この協力会社を削除しますか？')) {
                 const el = document.getElementById(`p-item-${id}`);
                 if (el) {
                     el.classList.add('opacity-0', 'scale-95', 'transition-all', 'duration-300');
                     setTimeout(() => el.remove(), 300);
                 }
-                try {
-                    await fetch(`${API_BASE}/partners/${id}`, { method: 'DELETE' });
-                    // Refresh data behind the scenes
-                    const res = await fetch(`${API_BASE}/partners`);
-                    allPartners = await res.json();
-                    renderDispatchPartnerMenu(allPartners);
-                } catch (err) {
-                    console.error("Delete failed", err);
-                }
+                
+                mockPartners = mockPartners.filter(p => p.id !== id);
+                renderDispatchPartnerMenu(mockPartners);
             }
         }
     </script>
