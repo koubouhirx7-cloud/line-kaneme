@@ -23,48 +23,89 @@
     <!-- Main Content -->
     <main class="max-w-md mx-auto p-5" id="mainContainer">
         
-        <form id="inquiryForm" onsubmit="submitInquiry(event)">
-            
-            <div class="mb-4">
-                <label class="block font-bold text-gray-700 text-[13px] mb-1.5">顧客名 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
-                <input type="text" id="custName" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="山田　太郎">
+        <!-- STEP 1: Input Form -->
+        <div id="formScreen">
+            <form id="inquiryForm" onsubmit="showConfirm(event)">
+                <div class="mb-4">
+                    <label class="block font-bold text-gray-700 text-[13px] mb-1.5">顧客名 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
+                    <input type="text" id="custName" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="山田　太郎">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block font-bold text-gray-700 text-[13px] mb-1.5">電話番号 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
+                    <input type="tel" id="custPhone" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 090-1234-5678">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block font-bold text-gray-700 text-[13px] mb-1.5">引取先ご住所など <span class="text-red-500 text-[10px] ml-1">必須</span></label>
+                    <input type="text" id="custFrom" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 東京都千代田区〜">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block font-bold text-gray-700 text-[13px] mb-1.5">納品先・お荷物詳細など <span class="text-red-500 text-[10px] ml-1">必須</span></label>
+                    <input type="text" id="custTo" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 1234-5678-9012">
+                </div>
+
+                <div class="mb-8">
+                    <label class="block font-bold text-gray-700 text-[13px] mb-1.5">お問い合わせ内容・ご要望 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
+                    <textarea id="custDetail" required rows="3" class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors resize-none" placeholder="例: 明日の午前中に到着時間の事前電話をお願いします。"></textarea>
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] transition-all active:scale-95 text-base flex items-center justify-center gap-2">
+                    入力内容を確認する
+                </button>
+            </form>
+        </div>
+
+        <!-- STEP 2: Confirmation Screen (Hidden initially) -->
+        <div id="confirmScreen" class="hidden">
+            <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">ご入力内容の確認</h2>
+            <p class="text-sm text-gray-600 mb-6">以下の内容で送信します。よろしいですか？</p>
+
+            <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 space-y-4 shadow-sm">
+                <div>
+                    <p class="text-[11px] text-gray-500 font-bold mb-1">顧客名</p>
+                    <p class="text-sm text-gray-800 font-medium" id="confName">-</p>
+                </div>
+                <div>
+                    <p class="text-[11px] text-gray-500 font-bold mb-1">電話番号</p>
+                    <p class="text-sm text-gray-800 font-medium" id="confPhone">-</p>
+                </div>
+                <div>
+                    <p class="text-[11px] text-gray-500 font-bold mb-1">引取先ご住所など</p>
+                    <p class="text-sm text-gray-800 font-medium" id="confFrom">-</p>
+                </div>
+                <div>
+                    <p class="text-[11px] text-gray-500 font-bold mb-1">納品先・お荷物詳細など</p>
+                    <p class="text-sm text-gray-800 font-medium" id="confTo">-</p>
+                </div>
+                <div>
+                    <p class="text-[11px] text-gray-500 font-bold mb-1">お問い合わせ内容・ご要望</p>
+                    <p class="text-sm text-gray-800 font-medium bg-gray-50 p-2 rounded mt-1 whitespace-pre-wrap" id="confDetail">-</p>
+                </div>
             </div>
 
-            <div class="mb-4">
-                <label class="block font-bold text-gray-700 text-[13px] mb-1.5">電話番号 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
-                <input type="tel" id="custPhone" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 090-1234-5678">
+            <div class="flex flex-col gap-3">
+                <button onclick="executeSubmit()" class="w-full bg-[#06C755] hover:bg-green-600 text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_0_rgba(6,199,85,0.39)] transition-all active:scale-95 text-base flex items-center justify-center gap-2">
+                    この内容で送信する
+                </button>
+                <button onclick="backToForm()" class="w-full bg-white border-2 border-gray-300 text-gray-600 font-bold py-3.5 rounded-xl hover:bg-gray-50 transition-all active:scale-95 text-base">
+                    入力画面へ戻る
+                </button>
             </div>
-
-            <div class="mb-4">
-                <label class="block font-bold text-gray-700 text-[13px] mb-1.5">ご住所 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
-                <input type="text" id="custFrom" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 東京都千代田区〜">
-            </div>
-
-            <div class="mb-4">
-                <label class="block font-bold text-gray-700 text-[13px] mb-1.5">お荷物番号 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
-                <input type="text" id="custTo" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 1234-5678-9012">
-            </div>
-
-            <div class="mb-8">
-                <label class="block font-bold text-gray-700 text-[13px] mb-1.5">お問い合わせ内容 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
-                <textarea id="custDetail" required rows="3" class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors resize-none" placeholder="例: 明日の午前中に到着時間の事前電話をお願いします。"></textarea>
-            </div>
-            
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] transition-all active:scale-95 text-base flex items-center justify-center gap-2">
-                問い合わせを送信
-            </button>
-        </form>
+        </div>
 
     </main>
 
-    <!-- Success Screen (Hidden initially) -->
+    <!-- STEP 3: Success Screen (Hidden initially) -->
     <div id="successScreen" class="hidden fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 text-center">
-        <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 success-anim">
-            <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+        <div class="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mb-6 success-anim relative">
+            <svg class="w-12 h-12 text-[#06C755] absolute z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+            <div class="absolute inset-0 border-4 border-[#06C755] rounded-full opacity-20 scale-150 animate-ping"></div>
         </div>
-        <h2 class="text-xl font-bold text-gray-800 mb-2">送信が完了しました</h2>
-        <p class="text-gray-500 text-sm mb-8 leading-relaxed">お問い合わせありがとうございます。<br>手配が進行次第、ご連絡いたします。<br><br>この画面を閉じてトークにお戻りください。</p>
-        <button onclick="closeAppBrowser()" class="bg-gray-800 text-white font-bold py-3 px-8 rounded-full shadow-md text-sm cursor-pointer hover:bg-gray-700 active:scale-95 transition-all">画面を閉じる</button>
+        <h2 class="text-2xl font-bold text-gray-800 mb-3">送信完了いたしました！</h2>
+        <p class="text-gray-600 text-sm mb-8 leading-relaxed bg-gray-50 p-4 rounded-lg">お問い合わせありがとうございます。<br>手配が進行次第、追ってご連絡いたします。<br><br>恐れ入りますが、この画面を閉じてLINEのトークルームにお戻りください。</p>
+        <button onclick="closeAppBrowser()" class="bg-[#06C755] text-white font-bold py-3.5 px-10 rounded-full shadow-lg text-sm cursor-pointer hover:bg-green-600 active:scale-95 transition-all">LINEトークへ戻る</button>
     </div>
 
     <!-- Spinner (Hidden initially) -->
@@ -84,9 +125,31 @@
             }, 300);
         }
 
-        async function submitInquiry(e) {
+        // 1. 確認画面を表示する
+        function showConfirm(e) {
             e.preventDefault();
+            
+            // フォームの値を反映
+            document.getElementById('confName').innerText = document.getElementById('custName').value;
+            document.getElementById('confPhone').innerText = document.getElementById('custPhone').value;
+            document.getElementById('confFrom').innerText = document.getElementById('custFrom').value;
+            document.getElementById('confTo').innerText = document.getElementById('custTo').value;
+            document.getElementById('confDetail').innerText = document.getElementById('custDetail').value;
+            
+            // 画面切り替え (Form -> Confirm)
+            document.getElementById('formScreen').classList.add('hidden');
+            document.getElementById('confirmScreen').classList.remove('hidden');
+            window.scrollTo(0, 0); // 上までスクロール
+        }
 
+        // 2. 入力画面に戻る
+        function backToForm() {
+            document.getElementById('formScreen').classList.remove('hidden');
+            document.getElementById('confirmScreen').classList.add('hidden');
+        }
+
+        // 3. 実際にAPIへ送信する
+        async function executeSubmit() {
             const cName = document.getElementById('custName').value;
             const cPhone = document.getElementById('custPhone').value;
             const cFrom = document.getElementById('custFrom').value;
@@ -94,9 +157,10 @@
             const cDetail = document.getElementById('custDetail').value;
 
             const overlay = document.getElementById('loadingOverlay');
-            overlay.classList.remove('hidden');
+            overlay.classList.remove('hidden'); // スピナー表示
 
             try {
+                // Vercel上のAPIエンドポイントに合わせる
                 const API_BASE = window.location.origin + '/api';
                 
                 const response = await fetch(`${API_BASE}/inquiries`, {
@@ -117,6 +181,7 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
+                // 成功したら画面切り替え (Confirm -> Success)
                 overlay.classList.add('hidden');
                 document.getElementById('mainContainer').classList.add('hidden');
                 document.getElementById('successScreen').classList.remove('hidden');
