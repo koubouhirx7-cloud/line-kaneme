@@ -387,7 +387,10 @@ def complete_inquiry(inquiry_id: str, background_tasks: BackgroundTasks, payload
         raise HTTPException(status_code=404, detail="Inquiry not found")
         
     if payload and payload.note:
-        inquiry.detail += f"\n\n【完了報告】\n{payload.note}"
+        if inquiry.detail is None:
+            inquiry.detail = f"【完了報告】\n{payload.note}"
+        else:
+            inquiry.detail += f"\n\n【完了報告】\n{payload.note}"
         
     inquiry.status = "completed"
     
