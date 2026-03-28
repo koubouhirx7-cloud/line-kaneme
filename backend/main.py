@@ -187,7 +187,11 @@ def dispatch_inquiry(inquiry_id: str, request_data: schemas.DispatchRequest, bac
     
     # Send LINE message to partner's line_group_id (Must be synchronous on Vercel)
     if partner.line_group_id and LINE_CHANNEL_ACCESS_TOKEN:
-        send_line_push_message(partner.line_group_id, inquiry, partner)
+        try:
+            send_line_push_message(partner.line_group_id, inquiry, partner)
+        except Exception as e:
+            # Catch LINE API errors (e.g., trying to message a user from an old channel)
+            print(f"Error sending push message to {partner.line_group_id}: {e}")
     
     return inquiry
 
