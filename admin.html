@@ -407,7 +407,7 @@
             const sel = document.getElementById('exportPeriod');
             sel.innerHTML = '';
             
-            const inquiries = window.allInquiries.filter(i => i.status === 'completed');
+            const inquiries = (window.lastInquiries || []).filter(i => i.status === 'completed');
             const groups = new Set();
             
             inquiries.forEach(req => {
@@ -1325,7 +1325,7 @@
             const sel = document.getElementById('exportPeriod');
             sel.innerHTML = '';
             
-            const inquiries = window.allInquiries.filter(i => i.status === 'completed');
+            const inquiries = (window.lastInquiries || []).filter(i => i.status === 'completed');
             const groups = new Set();
             
             inquiries.forEach(req => {
