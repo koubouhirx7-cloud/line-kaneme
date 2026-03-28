@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配送完了レポート</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* A4 Print Optimization */
+        @page {
+            size: A4 portrait;
+            margin: 15mm 15mm; /* standard print margins */
+        }
+        
+        @media print {
+            body {
+                background-color: white !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            /* Ensure table rows don't break across pages awkwardly */
+            tr {
+                page-break-inside: avoid;
+            }
+            thead {
+                display: table-header-group;
+            }
+        }
+        
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        /* Screen preview styling to look like a physical sheet of paper */
+        .paper-sheet {
+            background: white;
+            max-width: 210mm; /* A4 width */
+            min-height: 297mm; /* A4 height */
+            margin: 2rem auto;
+            padding: 15mm;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top control bar (Hidden during print) -->
+    <div class="bg-gray-800 text-white p-4 flex justify-between items-center no-print">
+        <div>
+            <h1 class="text-lg font-bold">レポートプレビュー</h1>
+            <p class="text-xs text-gray-400">データ取得とフォーマットが完了すると自動的に印刷ダイアログが開きます。</p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="window.close()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm font-bold transition">閉じる</button>
+            <button onclick="window.print()" id="btn-print" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded text-sm font-bold flex items-center gap-2 transition" disabled>
+                <svg class="w-4 h-4 animate-spin" id="print-spinner" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></path><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <span id="print-text">データ準備中...</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- The actual A4 document -->
+    <div class="paper-sheet" id="report-container">
+        
+        <!-- Document Header -->
+        <div class="border-b-2 border-gray-800 pb-4 mb-6 flex justify-between items-end">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900 mb-1">配送完了実績レポート</h1>
+                <p class="text-sm font-bold text-gray-600" id="report-period">対象期間: 読込中...</p>
+            </div>
+            <div class="text-right text-sm">
+                <p class="font-bold">HubCargo 配車システム</p>
+                <p class="text-gray-500" id="report-date">出力日: --</p>
+            </div>
+        </div>
+
+        <!-- Summary Banner -->
+        <div class="bg-gray-50 border border-gray-200 p-4 rounded mb-6 flex gap-8">
+            <div>
+                <p class="text-xs text-gray-500 font-bold mb-1">総完了件数</p>
+                <p class="text-xl font-black text-indigo-700"><span id="total-count">0</span> <span class="text-sm text-gray-600">件</span></p>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <table class="w-full text-left border-collapse text-sm">
+            <thead>
+                <tr class="bg-gray-100 border-b-2 border-gray-300">
+                    <th class="py-2 px-2 font-bold text-gray-700 w-24">完了日時</th>
+                    <th class="py-2 px-2 font-bold text-gray-700 w-20">受付番号</th>
+                    <th class="py-2 px-2 font-bold text-gray-700 w-24">顧客名</th>
+                    <th class="py-2 px-2 font-bold text-gray-700">集荷先 / 配送先</th>
+                    <th class="py-2 px-2 font-bold text-gray-700 w-32">荷物内容</th>
+                    <th class="py-2 px-2 font-bold text-gray-700 w-24">手配先</th>
+                </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-gray-200">
+                <tr><td colspan="6" class="py-10 text-center text-gray-400">データを読み込んでいます...</td></tr>
+            </tbody>
+        </table>
+
+        <!-- Footer Notice -->
+        <div class="mt-8 text-center text-xs text-gray-400">
+            --- End of Report ---
+        </div>
+    </div>
+
+    <!-- Initialization Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const start = urlParams.get('start');
+            const end = urlParams.get('end');
+            const titleRaw = urlParams.get('title') || '期間指定なし';
+            const type = urlParams.get('type') || '';
+
+            // Format title
+            let titleStr = titleRaw;
+            if (type === 'month') {
+                const [y, m] = titleRaw.split('-');
+                titleStr = `${y}年${parseInt(m)}月度`;
+            } else if (type === 'week') {
+                const [y, w] = titleRaw.split('-W');
+                titleStr = `${y}年 第${parseInt(w)}週`;
+            }
+
+            document.getElementById('report-period').innerText = `対象期間: ${titleStr}`;
+            
+            const now = new Date();
+            document.getElementById('report-date').innerText = `出力日時: ${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            if (!start || !end) {
+                document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="py-10 text-center text-red-500">エラー: 期間が指定されていません。</td></tr>`;
+                readyToPrint();
+                return;
+            }
+
+            try {
+                // Fetch completed requests from our new backend endpoint
+                const res = await fetch(`/api/reports/completed?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`);
+                if (!res.ok) throw new Error('Network response was not ok');
+                const data = await res.json();
+                
+                // Fetch partners to map names
+                const pRes = await fetch(`/api/partners`);
+                const partners = await pRes.json();
+                const partnerMap = {};
+                partners.forEach(p => partnerMap[p.id] = p.name);
+
+                document.getElementById('total-count').innerText = data.length;
+
+                const tbody = document.getElementById('table-body');
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="py-10 text-center text-gray-500">指定期間に完了した案件はありません。</td></tr>`;
+                } else {
+                    let html = '';
+                    data.forEach(req => {
+                        const d = new Date(req.updated_at || req.created_at);
+                        const dateStr = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                        
+                        const pName = partnerMap[req.dispatched_to_partner_id] || '未登録業者';
+                        const locSafe = (loc) => (loc || '未入力').replace(/</g, '&lt;');
+                        
+                        html += `
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-3 px-2 text-xs text-gray-500 whitespace-nowrap">${dateStr}</td>
+                                <td class="py-3 px-2 text-[10px] text-gray-400 font-mono">${req.id.split('-')[1] || req.id}</td>
+                                <td class="py-3 px-2 text-xs font-bold text-gray-800">${locSafe(req.customer_name)} 様</td>
+                                <td class="py-3 px-2 text-xs text-gray-600">
+                                    <div class="text-[10px] text-gray-400">発: ${locSafe(req.pickup_location)}</div>
+                                    <div class="text-[10px] text-gray-400">着: ${locSafe(req.delivery_location)}</div>
+                                </td>
+                                <td class="py-3 px-2 text-[11px] text-gray-600 truncate max-w-[12rem]">${locSafe(req.detail)}</td>
+                                <td class="py-3 px-2 text-xs text-indigo-700 font-bold">${pName}</td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                }
+                
+                // Allow CSS to reflow slightly
+                setTimeout(readyToPrint, 500);
+
+            } catch(e) {
+                console.error(e);
+                document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="py-10 text-center text-red-500">データの読み込みに失敗しました。</td></tr>`;
+                readyToPrint();
+            }
+        });
+
+        function readyToPrint() {
+            const btn = document.getElementById('btn-print');
+            document.getElementById('print-spinner').classList.add('hidden');
+            document.getElementById('print-text').innerText = 'PDFとして保存する / 印刷する';
+            btn.classList.replace('bg-indigo-600', 'bg-emerald-600');
+            btn.classList.replace('hover:bg-indigo-700', 'hover:bg-emerald-700');
+            btn.disabled = false;
+            
+            // Auto open print dialog
+            window.print();
+        }
+    </script>
+</body>
+</html>

@@ -143,6 +143,23 @@ def get_inquiries(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
     inquiries = db.query(models.Inquiry).order_by(models.Inquiry.created_at.desc()).offset(skip).limit(limit).all()
     return inquiries
 
+@app.get("/api/reports/completed", response_model=List[schemas.InquiryResponse])
+def get_completed_reports(start_date: str, end_date: str, db: Session = Depends(get_db)):
+    try:
+        from datetime import datetime
+        start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+        end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use ISO format.")
+        
+    inquiries = db.query(models.Inquiry).filter(
+        models.Inquiry.status == "completed",
+        models.Inquiry.updated_at >= start_dt,
+        models.Inquiry.updated_at <= end_dt
+    ).order_by(models.Inquiry.updated_at.desc()).all()
+    
+    return inquiries
+
 @app.delete("/api/inquiries/{inquiry_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_inquiry(inquiry_id: str, db: Session = Depends(get_db)):
     inquiry = db.query(models.Inquiry).filter(models.Inquiry.id == inquiry_id).first()
