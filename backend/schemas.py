@@ -29,6 +29,7 @@ class PartnerBase(BaseModel):
     line_group_id: Optional[str] = None
     icon_emoji: str = "🏢"
     is_active: bool = True
+    sort_order: int = 0
 
 class PartnerCreate(PartnerBase):
     pass

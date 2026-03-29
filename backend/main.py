@@ -52,6 +52,12 @@ try:
 except Exception:
     pass
 
+try:
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE partners ADD COLUMN sort_order INTEGER DEFAULT 0"))
+except Exception:
+    pass
+
 
 app = FastAPI(title="HubCargo Delivery API")
 
@@ -416,8 +422,20 @@ def create_partner(partner: schemas.PartnerCreate, db: Session = Depends(get_db)
 
 @app.get("/api/partners", response_model=List[schemas.PartnerResponse])
 def get_partners(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    partners = db.query(models.Partner).filter(models.Partner.is_active == True).offset(skip).limit(limit).all()
+    partners = db.query(models.Partner).filter(models.Partner.is_active == True).order_by(models.Partner.sort_order.asc(), models.Partner.id.asc()).offset(skip).limit(limit).all()
     return partners
+
+@app.put("/api/partners/reorder")
+def reorder_partners(payload: List[dict], db: Session = Depends(get_db)):
+    for item in payload:
+        part_id = item.get("id")
+        sort_order = item.get("sort_order")
+        if part_id is not None and sort_order is not None:
+            partner = db.query(models.Partner).filter(models.Partner.id == part_id).first()
+            if partner:
+                partner.sort_order = sort_order
+    db.commit()
+    return {"ok": True}
 
 @app.delete("/api/partners/{partner_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_partner(partner_id: int, db: Session = Depends(get_db)):

@@ -636,13 +636,44 @@
                                 <p class="text-[9px] text-gray-500">LINE: ${line}</p>
                             </div>
                         </div>
-                        <button onclick="deletePartner(${p.id})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <button onclick="movePartner(${p.id}, -1)" class="text-gray-400 hover:bg-gray-100 text-xs p-1 rounded font-bold transition">↑</button>
+                            <button onclick="movePartner(${p.id}, 1)" class="text-gray-400 hover:bg-gray-100 text-xs p-1 rounded font-bold transition">↓</button>
+                            <button onclick="deletePartner(${p.id})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
                     </div>
                 `;
             });
             list.innerHTML = html;
+        }
+
+        async function movePartner(id, direction) {
+            const index = allPartners.findIndex(p => p.id === id);
+            if (index < 0) return;
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= allPartners.length) return; 
+
+            const temp = allPartners[index];
+            allPartners[index] = allPartners[newIndex];
+            allPartners[newIndex] = temp;
+
+            allPartners.forEach((p, idx) => p.sort_order = idx);
+
+            renderSettingsPartners(allPartners);
+            renderDispatchPartnerMenu(allPartners);
+
+            try {
+                const payload = allPartners.map(p => ({ id: p.id, sort_order: p.sort_order }));
+                await fetch('/api/partners/reorder', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.error("Reorder failed", err);
+            }
         }
 
         function renderDispatchPartnerMenu(partners) {

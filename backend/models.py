@@ -25,3 +25,4 @@ class Partner(Base):
     line_group_id = Column(String, nullable=True)
     icon_emoji = Column(String, default="🏢")
     is_active = Column(Boolean, default=True)
+    sort_order = Column(Integer, default=0)
