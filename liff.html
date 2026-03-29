@@ -46,8 +46,8 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block font-bold text-gray-700 text-[13px] mb-1.5">お荷物番号 <span class="text-red-500 text-[10px] ml-1">必須</span></label>
-                    <input type="text" id="custTo" oninput="this.value = toHalfWidth(this.value)" required class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 1234-5678-9012">
+                    <label class="block font-bold text-gray-700 text-[13px] mb-1.5">お荷物番号 <span class="text-gray-400 text-[10px] ml-1">任意</span></label>
+                    <input type="text" id="custTo" oninput="this.value = toHalfWidth(this.value)" class="w-full bg-white text-gray-800 border-2 border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors" placeholder="例: 1234-5678-9012">
                 </div>
 
                 <div class="mb-8">
@@ -80,7 +80,7 @@
                     <p class="text-sm text-gray-800 font-medium" id="confFrom">-</p>
                 </div>
                 <div>
-                    <p class="text-[11px] text-gray-500 font-bold mb-1">お荷物番号</p>
+                    <p class="text-[11px] text-gray-500 font-bold mb-1">お荷物番号 (任意)</p>
                     <p class="text-sm text-gray-800 font-medium" id="confTo">-</p>
                 </div>
                 <div>
@@ -180,7 +180,7 @@
             document.getElementById('confName').innerText = document.getElementById('custName').value;
             document.getElementById('confPhone').innerText = document.getElementById('custPhone').value;
             document.getElementById('confFrom').innerText = document.getElementById('custFrom').value;
-            document.getElementById('confTo').innerText = document.getElementById('custTo').value;
+            document.getElementById('confTo').innerText = document.getElementById('custTo').value.trim() || '未入力';
             document.getElementById('confDetail').innerText = document.getElementById('custDetail').value;
             
             // 画面切り替え (Form -> Confirm)
@@ -200,7 +200,7 @@
             const cName = document.getElementById('custName').value;
             const cPhone = document.getElementById('custPhone').value;
             const cFrom = document.getElementById('custFrom').value;
-            const cTo = document.getElementById('custTo').value;
+            const dataTo = document.getElementById('custTo').value.trim() || '未入力';
             const cDetail = document.getElementById('custDetail').value;
 
             const overlay = document.getElementById('loadingOverlay');
@@ -219,7 +219,7 @@
                         customer_name: cName,
                         phone_number: cPhone,
                         pickup_location: cFrom,
-                        delivery_location: cTo,
+                        delivery_location: dataTo === '未入力' ? null : dataTo,
                         detail: cDetail
                     })
                 });

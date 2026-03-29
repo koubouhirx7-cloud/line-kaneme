@@ -748,8 +748,8 @@
                                 </button>
                             </div>
                         </div>
-                        <p class="text-[10px] text-gray-500 ${textClass} mb-1 card-detail">ご住所: ${req.pickup_location}</p>
-                        <p class="text-[10px] text-gray-500 ${textClass} mb-2 card-detail">お荷物番号: ${req.delivery_location}</p>
+                        <p class="text-[10px] text-gray-500 ${textClass} mb-1 card-detail">ご住所: ${req.pickup_location || '未入力'}</p>
+                        <p class="text-[10px] text-gray-500 ${textClass} mb-2 card-detail">お荷物番号: ${req.delivery_location || '未入力'}</p>
                         <p class="text-[11px] text-gray-600 ${textClass} mb-2 bg-gray-50 p-1 rounded card-detail">内容: ${req.detail}</p>
                     </div>
                 `;
@@ -882,8 +882,8 @@
                             <div>${badge}</div>
                         </div>
                         ${partnerText}
-                        <p class="text-[10px] text-gray-500 truncate mb-1">ご住所: ${req.pickup_location}</p>
-                        <p class="text-[10px] text-gray-500 truncate mb-2">お荷物番号: ${req.delivery_location}</p>
+                        <p class="text-[10px] text-gray-500 truncate mb-1">ご住所: ${req.pickup_location || '未入力'}</p>
+                        <p class="text-[10px] text-gray-500 truncate mb-2">お荷物番号: ${req.delivery_location || '未入力'}</p>
                         <p class="text-[11px] text-gray-600 truncate mb-2 bg-gray-50 p-1 rounded">内容: ${req.detail}</p>
                         ${btnState}
                     </div>
@@ -1042,7 +1042,7 @@
 
             document.getElementById('pass-name').innerText = inquiry.customer_name;
             document.getElementById('pass-phone').innerText = inquiry.phone_number;
-            document.getElementById('pass-detail').innerText = `ご住所: ${inquiry.pickup_location}\nお荷物番号: ${inquiry.delivery_location}\n詳細: ${inquiry.detail}`;
+            document.getElementById('pass-detail').innerText = `ご住所: ${inquiry.pickup_location || '未入力'}\nお荷物番号: ${inquiry.delivery_location || '未入力'}\n詳細: ${inquiry.detail}`;
 
             switchTab('dispatch');
             document.getElementById('dispatch-empty').classList.add('hidden');
