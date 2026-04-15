@@ -151,12 +151,12 @@ def create_inquiry(inquiry: schemas.InquiryCreate, background_tasks: BackgroundT
     return db_inquiry
 
 @app.get("/api/inquiries", response_model=List[schemas.InquiryResponse])
-def get_inquiries(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def get_inquiries(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
     inquiries = db.query(models.Inquiry).order_by(models.Inquiry.created_at.desc()).offset(skip).limit(limit).all()
     return inquiries
 
 @app.get("/api/reports/completed", response_model=List[schemas.InquiryResponse])
-def get_completed_reports(start_date: str, end_date: str, db: Session = Depends(get_db)):
+def get_completed_reports(start_date: str, end_date: str, db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
     try:
         from datetime import datetime
         start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
@@ -173,7 +173,7 @@ def get_completed_reports(start_date: str, end_date: str, db: Session = Depends(
     return inquiries
 
 @app.delete("/api/inquiries/{inquiry_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_inquiry(inquiry_id: str, db: Session = Depends(get_db)):
+def delete_inquiry(inquiry_id: str, db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
     inquiry = db.query(models.Inquiry).filter(models.Inquiry.id == inquiry_id).first()
     if not inquiry:
         raise HTTPException(status_code=404, detail="Inquiry not found")
@@ -183,7 +183,7 @@ def delete_inquiry(inquiry_id: str, db: Session = Depends(get_db)):
     return {"ok": True}
 
 @app.post("/api/inquiries/{inquiry_id}/dispatch", response_model=schemas.InquiryResponse)
-def dispatch_inquiry(inquiry_id: str, request_data: schemas.DispatchRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+def dispatch_inquiry(inquiry_id: str, request_data: schemas.DispatchRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
     inquiry = db.query(models.Inquiry).filter(models.Inquiry.id == inquiry_id).first()
     if not inquiry:
         raise HTTPException(status_code=404, detail="Inquiry not found")
@@ -435,7 +435,7 @@ def complete_inquiry(inquiry_id: str, background_tasks: BackgroundTasks, payload
 # --- Partner Endpoints ---
 
 @app.post("/api/partners", response_model=schemas.PartnerResponse, status_code=status.HTTP_201_CREATED)
-def create_partner(partner: schemas.PartnerCreate, db: Session = Depends(get_db)):
+def create_partner(partner: schemas.PartnerCreate, db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
     db_partner = models.Partner(**partner.dict())
     db.add(db_partner)
     db.commit()
@@ -443,12 +443,12 @@ def create_partner(partner: schemas.PartnerCreate, db: Session = Depends(get_db)
     return db_partner
 
 @app.get("/api/partners", response_model=List[schemas.PartnerResponse])
-def get_partners(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def get_partners(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
     partners = db.query(models.Partner).filter(models.Partner.is_active == True).order_by(models.Partner.sort_order.asc(), models.Partner.id.asc()).offset(skip).limit(limit).all()
     return partners
 
 @app.put("/api/partners/reorder")
-def reorder_partners(payload: List[dict], db: Session = Depends(get_db)):
+def reorder_partners(payload: List[dict], db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
     for item in payload:
         part_id = item.get("id")
         sort_order = item.get("sort_order")
@@ -460,7 +460,7 @@ def reorder_partners(payload: List[dict], db: Session = Depends(get_db)):
     return {"ok": True}
 
 @app.delete("/api/partners/{partner_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_partner(partner_id: int, db: Session = Depends(get_db)):
+def delete_partner(partner_id: int, db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
     partner = db.query(models.Partner).filter(models.Partner.id == partner_id).first()
     if not partner:
         raise HTTPException(status_code=404, detail="Partner not found")
@@ -472,7 +472,7 @@ def delete_partner(partner_id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/api/partners/{partner_id}", response_model=schemas.PartnerResponse)
-def update_partner(partner_id: int, partner: schemas.PartnerCreate, db: Session = Depends(get_db)):
+def update_partner(partner_id: int, partner: schemas.PartnerCreate, db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
     db_partner = db.query(models.Partner).filter(models.Partner.id == partner_id).first()
     if not db_partner:
         raise HTTPException(status_code=404, detail="Partner not found")
@@ -583,7 +583,7 @@ def send_reminder_line_message(to_id: str, inquiry: models.Inquiry):
             print(f"Failed to send LINE Reminder Flex message: {e}")
 
 @app.get("/api/cron/reminders")
-def check_reminders(db: Session = Depends(get_db)):
+def check_reminders(db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
     if not LINE_CHANNEL_ACCESS_TOKEN:
         return {"status": "skipped", "reason": "no token"}
         
