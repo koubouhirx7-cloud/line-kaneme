@@ -225,7 +225,11 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    let errBody = '';
+                    try { errBody = await response.text(); } catch(_) {}
+                    const err = new Error(`HTTP ${response.status}`);
+                    err._responseBody = errBody;
+                    throw err;
                 }
 
                 // 成功したら画面切り替え (Confirm -> Success)
@@ -236,7 +240,13 @@
             } catch (error) {
                 console.error("Submission error:", error);
                 overlay.classList.add('hidden');
-                alert("送信に失敗しました。通信環境をご確認の上、もう一度お試しください。");
+
+                let detail = error.message || '不明なエラー';
+                // responseがあれば本文も読む
+                if (error._responseBody) {
+                    detail += `\n\u30b5ーバー詳細: ${error._responseBody}`;
+                }
+                alert(`送信に失敗しました。\n${detail}\n\n通信環境をご確認の上、もう一度お試しください。`);
             }
         }
     </script>
