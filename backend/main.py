@@ -90,6 +90,7 @@ def get_html_content(filename: str) -> str:
         logging.error(f"Error reading {filename}: {e}")
         return "<h1>Error loading page</h1>"
 
+import base64
 security = HTTPBasic()
 
 def authenticate_admin(credentials: HTTPBasicCredentials = Depends(security)):
@@ -114,18 +115,37 @@ def authenticate_admin(credentials: HTTPBasicCredentials = Depends(security)):
         )
     return credentials.username
 
+def inject_admin_token(html: str, credentials: HTTPBasicCredentials) -> str:
+    """Inject auth token + fetch interceptor into the HTML page."""
+    token = base64.b64encode(f"{credentials.username}:{credentials.password}".encode()).decode()
+    script = (
+        '<script>'
+        f'window.__ADMIN_TOKEN="Basic {token}";'
+        'const _fetch=window.fetch;'
+        'window.fetch=function(url,opts){'
+        'opts=opts||{};'
+        'if(window.__ADMIN_TOKEN&&typeof url==="string"&&url.includes("/api/")){'
+        'opts.headers=Object.assign({},opts.headers,{"Authorization":window.__ADMIN_TOKEN});'
+        '}return _fetch.call(this,url,opts);};'
+        '</script>'
+    )
+    return html.replace('</head>', script + '\n</head>', 1)
+
 @app.get("/", response_class=HTMLResponse)
-def serve_index_dashboard(request: Request, _ = Depends(authenticate_admin)):
-    return get_html_content("index.html")
+def serve_index_dashboard(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
+    authenticate_admin(credentials)
+    return inject_admin_token(get_html_content("index.html"), credentials)
 
 @app.get("/index.html", response_class=HTMLResponse)
-def serve_index_dashboard_named(request: Request, _ = Depends(authenticate_admin)):
-    return get_html_content("index.html")
+def serve_index_dashboard_named(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
+    authenticate_admin(credentials)
+    return inject_admin_token(get_html_content("index.html"), credentials)
 
 
 @app.get("/admin.html", response_class=HTMLResponse)
-def serve_admin_dashboard(request: Request, _ = Depends(authenticate_admin)):
-    return get_html_content("admin.html")
+def serve_admin_dashboard(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
+    authenticate_admin(credentials)
+    return inject_admin_token(get_html_content("admin.html"), credentials)
 
 # --- Inquiry Endpoints ---
 
