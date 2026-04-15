@@ -18,10 +18,7 @@
     { "src": "/", "dest": "api/index.py" },
     { "src": "/complete.html", "dest": "/complete.html" },
     { "src": "/liff.html", "dest": "/liff.html" },
-    { "src": "/public_demo.html", "dest": "/public_demo.html" },
-    { "src": "/demo_app.html", "dest": "/demo_app.html" },
-    { "src": "/corporate_demo.html", "dest": "/corporate_demo.html" },
     { "src": "/inquiry_portal.html", "dest": "/inquiry_portal.html" },
-    { "src": "/report.html", "dest": "/report.html" }
+    { "src": "/(.*)", "dest": "api/index.py" }
   ]
 }
