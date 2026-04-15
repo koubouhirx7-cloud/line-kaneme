@@ -37,6 +37,7 @@ load_dotenv()
 # LINE Configuration
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "")
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET", "")
+ADMIN_LINE_USER_ID = os.getenv("ADMIN_LINE_USER_ID", "")  # 管理者のLINEユーザーIDまたはグループID
 
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
@@ -129,7 +130,7 @@ def serve_admin_dashboard(request: Request, _ = Depends(authenticate_admin)):
 # --- Inquiry Endpoints ---
 
 @app.post("/api/inquiries", response_model=schemas.InquiryResponse, status_code=status.HTTP_201_CREATED)
-def create_inquiry(inquiry: schemas.InquiryCreate, db: Session = Depends(get_db)):
+def create_inquiry(inquiry: schemas.InquiryCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     db_inquiry = models.Inquiry(
         id=f"YK-{str(uuid.uuid4()).split('-')[0].upper()}",
         customer_name=inquiry.customer_name,
@@ -142,6 +143,11 @@ def create_inquiry(inquiry: schemas.InquiryCreate, db: Session = Depends(get_db)
     db.add(db_inquiry)
     db.commit()
     db.refresh(db_inquiry)
+
+    # 管理者へのLINE通知（ADMIN_LINE_USER_IDが設定されている場合のみ）
+    if ADMIN_LINE_USER_ID and LINE_CHANNEL_ACCESS_TOKEN:
+        background_tasks.add_task(send_admin_new_inquiry_notification, db_inquiry.id, db_inquiry.customer_name, db_inquiry.phone_number, db_inquiry.pickup_location, db_inquiry.delivery_location, db_inquiry.detail)
+
     return db_inquiry
 
 @app.get("/api/inquiries", response_model=List[schemas.InquiryResponse])
@@ -465,6 +471,17 @@ def delete_partner(partner_id: int, db: Session = Depends(get_db)):
     return {"ok": True}
 
 
+@app.put("/api/partners/{partner_id}", response_model=schemas.PartnerResponse)
+def update_partner(partner_id: int, partner: schemas.PartnerCreate, db: Session = Depends(get_db)):
+    db_partner = db.query(models.Partner).filter(models.Partner.id == partner_id).first()
+    if not db_partner:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    db_partner.name = partner.name
+    if partner.line_group_id is not None:
+        db_partner.line_group_id = partner.line_group_id
+    db.commit()
+    db.refresh(db_partner)
+    return db_partner
 
 # --- Cron / Polling Reminders ---
 
