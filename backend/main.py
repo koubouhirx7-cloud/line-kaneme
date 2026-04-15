@@ -166,7 +166,18 @@ def create_inquiry(inquiry: schemas.InquiryCreate, background_tasks: BackgroundT
 
     # 管理者へのLINE通知（ADMIN_LINE_USER_IDが設定されている場合のみ）
     if ADMIN_LINE_USER_ID and LINE_CHANNEL_ACCESS_TOKEN:
-        background_tasks.add_task(send_admin_new_inquiry_notification, db_inquiry.id, db_inquiry.customer_name, db_inquiry.phone_number, db_inquiry.pickup_location, db_inquiry.delivery_location, db_inquiry.detail)
+        try:
+            background_tasks.add_task(
+                send_admin_new_inquiry_notification,
+                db_inquiry.id,
+                db_inquiry.customer_name,
+                db_inquiry.phone_number,
+                db_inquiry.pickup_location,
+                db_inquiry.delivery_location,
+                db_inquiry.detail
+            )
+        except Exception as e:
+            print(f"Failed to schedule admin notification: {e}")
 
     return db_inquiry
 
@@ -357,6 +368,63 @@ from typing import Optional
 
 class CompletePayload(BaseModel):
     note: Optional[str] = None
+
+def send_admin_new_inquiry_notification(inquiry_id: str, customer_name: str, phone_number: str, pickup_location: str, delivery_location: str, detail: str):
+    """顧客から新しいお問い合わせが届いた際に管理者へLINE通知を送る"""
+    try:
+        flex_dict = {
+            "type": "bubble",
+            "size": "kilo",
+            "header": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [{"type": "text", "text": "🔔 新規お問い合わせ", "color": "#ffffff", "weight": "bold", "size": "md"}],
+                "backgroundColor": "#2764E5",
+                "paddingTop": "12px",
+                "paddingBottom": "12px"
+            },
+            "body": {
+                "type": "box",
+                "layout": "vertical",
+                "spacing": "md",
+                "contents": [
+                    {"type": "text", "text": f"{customer_name} 様", "weight": "bold", "size": "lg", "wrap": True},
+                    {"type": "text", "text": f"📞 {phone_number or '番号なし'}", "size": "sm", "color": "#2764E5"},
+                    {"type": "text", "text": f"受付番号: {inquiry_id}", "size": "sm", "color": "#888888"},
+                    {
+                        "type": "box", "layout": "vertical", "margin": "md",
+                        "backgroundColor": "#f4f6f9", "paddingAll": "12px", "cornerRadius": "8px",
+                        "contents": [
+                            {"type": "text", "text": f"住所: {pickup_location or '未入力'}", "size": "sm", "wrap": True, "color": "#333333"},
+                            {"type": "text", "text": f"内容: {(detail or '')[:80]}", "size": "sm", "wrap": True, "color": "#555555", "margin": "sm"}
+                        ]
+                    }
+                ],
+                "paddingAll": "20px"
+            },
+            "footer": {
+                "type": "box", "layout": "vertical",
+                "contents": [{
+                    "type": "button",
+                    "action": {"type": "uri", "label": "管理画面で確認する", "uri": "https://line-kaneme.vercel.app/"},
+                    "color": "#2764E5", "style": "primary"
+                }],
+                "paddingAll": "16px"
+            }
+        }
+        with ApiClient(configuration) as api_client:
+            line_bot_api = MessagingApi(api_client)
+            flex_container = FlexContainer.from_dict(flex_dict)
+            flex_message = FlexMessage(
+                alt_text=f"🔔 新規お問い合わせ: {customer_name} 様",
+                contents=flex_container
+            )
+            line_bot_api.push_message(
+                PushMessageRequest(to=ADMIN_LINE_USER_ID, messages=[flex_message])
+            )
+        print(f"Admin notification sent for {inquiry_id}")
+    except Exception as e:
+        print(f"Failed to send admin notification: {e}")
 
 def send_completion_push_message(to_id: str, inquiry: models.Inquiry, note: str):
     try:
