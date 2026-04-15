@@ -399,15 +399,31 @@ def complete_inquiry(inquiry_id: str, background_tasks: BackgroundTasks, payload
             inquiry.detail += f"\n\n【完了報告】\n{payload.note}"
         
     inquiry.status = "completed"
-    
+
+    # --- バグ修正 ---
+    # DBコミット前に必要な値をプリミティブとして確保する。
+    # SQLAlchemyオブジェクトをそのままバックグラウンドタスクに渡すと、
+    # コミット後にセッションが変わりデータが別の問い合わせのものに差し替わる恐れがある。
+    partner_group_id = None
+    note_val = None
+    # inquiry情報もプリミティブで確保
+    snap = {
+        "id": inquiry.id,
+        "customer_name": inquiry.customer_name,
+    }
     if inquiry.dispatched_to_partner_id:
         partner = db.query(models.Partner).filter(models.Partner.id == inquiry.dispatched_to_partner_id).first()
         if partner and partner.line_group_id and os.getenv("LINE_CHANNEL_ACCESS_TOKEN"):
-            note_val = payload.note if payload and payload.note else "特になし"
-            background_tasks.add_task(send_completion_push_message, partner.line_group_id, inquiry, note_val)
-            
+            partner_group_id = partner.line_group_id  # ← ここでスナップショット
+            note_val = (payload.note if payload and payload.note else "特になし")
+
     db.commit()
     db.refresh(inquiry)
+
+    # コミット完了後にバックグラウンドタスクを登録（スナップショット済みの値を使用）
+    if partner_group_id:
+        background_tasks.add_task(send_completion_push_message, partner_group_id, inquiry, note_val)
+
     return inquiry
 
 # --- Partner Endpoints ---
