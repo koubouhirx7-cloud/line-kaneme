@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HubCargo システム管理 | Developer Console</title>
+  <meta name="description" content="HubCargo 配送システムの開発者向けシステム管理コンソール。エラーログ・ヘルスチェック・Discord通知テストを提供。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-base:    #0d1117;
+      --bg-surface: #161b22;
+      --bg-card:    #1c2128;
+      --bg-hover:   #21262d;
+      --border:     #30363d;
+      --border-dim: #21262d;
+
+      --text-primary:   #e6edf3;
+      --text-secondary: #8b949e;
+      --text-dim:       #484f58;
+
+      --red:    #ff3333;
+      --red-bg: rgba(255, 51, 51, 0.12);
+      --red-border: rgba(255, 51, 51, 0.35);
+
+      --orange:    #f0883e;
+      --orange-bg: rgba(240, 136, 62, 0.12);
+      --orange-border: rgba(240, 136, 62, 0.35);
+
+      --green:    #3fb950;
+      --green-bg: rgba(63, 185, 80, 0.12);
+      --green-border: rgba(63, 185, 80, 0.35);
+
+      --blue:    #58a6ff;
+      --blue-bg: rgba(88, 166, 255, 0.12);
+      --blue-border: rgba(88, 166, 255, 0.35);
+
+      --purple:    #bc8cff;
+      --purple-bg: rgba(188, 140, 255, 0.12);
+
+      --discord: #5865F2;
+      --discord-hover: #4752C4;
+
+      --radius: 8px;
+      --radius-lg: 12px;
+      --transition: 0.2s ease;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── TOP BAR ───────────────────────── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 56px;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+    }
+    .topbar-brand .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      background: var(--purple-bg);
+      color: var(--purple);
+      border: 1px solid rgba(188,140,255,0.3);
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar-link {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 5px 12px;
+      border-radius: var(--radius);
+      transition: background var(--transition), color var(--transition);
+    }
+    .topbar-link:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    .refresh-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .refresh-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* ── LAYOUT ────────────────────────── */
+    .layout {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+    }
+
+    .page-header {
+      margin-bottom: 32px;
+    }
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 6px;
+    }
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* ── SECTION ─────────────────────── */
+    .section { margin-bottom: 40px; }
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-dim);
+    }
+
+    /* ── HEALTH CARDS ─────────────────── */
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    .health-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .health-card:hover {
+      border-color: var(--border);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .health-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .health-card-icon {
+      font-size: 20px;
+    }
+    .status-pill {
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 3px 9px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+    .status-ok   { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+    .status-warn { background: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange-border); }
+    .status-err  { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+    .status-info { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+
+    .health-card-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .health-card-value {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -0.03em;
+    }
+    .health-card-value.ok     { color: var(--green); }
+    .health-card-value.warn   { color: var(--orange); }
+    .health-card-value.error  { color: var(--red); }
+    .health-card-value.info   { color: var(--blue); }
+    .health-card-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── ACTION BAR ──────────────────── */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .action-bar-right {
+      margin-left: auto;
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition), opacity var(--transition), transform var(--transition);
+      font-family: 'Inter', sans-serif;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-primary);
+    }
+    .btn-ghost:hover { background: var(--bg-hover); }
+
+    .btn-danger {
+      background: var(--red-bg);
+      border-color: var(--red-border);
+      color: var(--red);
+    }
+    .btn-danger:hover { background: rgba(255,51,51,0.22); }
+
+    .btn-discord {
+      background: var(--discord);
+      color: #fff;
+      border-color: transparent;
+    }
+    .btn-discord:hover { background: var(--discord-hover); }
+
+    .btn-green {
+      background: var(--green-bg);
+      border-color: var(--green-border);
+      color: var(--green);
+    }
+    .btn-green:hover { background: rgba(63,185,80,0.22); }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-label input[type=checkbox] { accent-color: var(--blue); width: 14px; height: 14px; }
+
+    /* ── ERROR LIST ───────────────────── */
+    .error-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .error-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--red);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .error-card.dismissed { border-left-color: var(--border); opacity: 0.45; }
+    .error-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.35); }
+
+    .error-header {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .error-type-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid var(--red-border);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .error-type-badge.dismissed { background: var(--bg-hover); color: var(--text-secondary); border-color: var(--border); }
+
+    .error-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--blue);
+      background: var(--blue-bg);
+      padding: 2px 8px;
+      border-radius: 4px;
+      max-width: 400px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .error-time {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      margin-left: auto;
+    }
+
+    .discord-badge {
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(88,101,242,0.18);
+      color: #8891f2;
+      border: 1px solid rgba(88,101,242,0.3);
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .discord-badge.unsent { background: var(--orange-bg); color: var(--orange); border-color: var(--orange-border); }
+
+    .error-message {
+      padding: 0 16px 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .error-body {
+      display: none;
+      border-top: 1px solid var(--border-dim);
+    }
+    .error-body.open { display: block; }
+
+    .traceback-block {
+      margin: 0;
+      padding: 14px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: #cdd9e5;
+      background: rgba(0,0,0,0.4);
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.7;
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .error-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border-dim);
+      background: rgba(0,0,0,0.2);
+    }
+
+    /* ── EMPTY STATE ─────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 64px 24px;
+      color: var(--text-dim);
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state .title { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .empty-state .sub { font-size: 13px; }
+
+    /* ── TOAST ───────────────────────── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      padding: 12px 18px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid;
+      animation: toastIn 0.3s ease;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      max-width: 320px;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .toast.success { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+    .toast.error   { background: var(--red-bg);   color: var(--red);   border-color: var(--red-border); }
+    .toast.info    { background: var(--blue-bg);  color: var(--blue);  border-color: var(--blue-border); }
+
+    /* ── LOADING ─────────────────────── */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── SKELETON ────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--radius);
+      height: 80px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* ── MISC ───────────────────────── */
+    select {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: var(--radius);
+      padding: 7px 11px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      outline: none;
+    }
+    select:hover { border-color: var(--blue); }
+
+    @media (max-width: 600px) {
+      .health-grid { grid-template-columns: 1fr 1fr; }
+      .action-bar { flex-direction: column; align-items: flex-start; }
+      .action-bar-right { margin-left: 0; }
+      .topbar-right .topbar-link:not(:last-child) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ────────────── TOP BAR ────────────── -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <span>⚙️</span>
+    HubCargo
+    <span class="badge">Developer Console</span>
+  </div>
+  <div class="topbar-right">
+    <div class="refresh-indicator">
+      <div class="refresh-dot"></div>
+      <span id="next-refresh-label">30s</span>
+    </div>
+    <a href="/admin.html" class="topbar-link">管理画面</a>
+    <a href="/" class="topbar-link">トップ</a>
+  </div>
+</header>
+
+<!-- ────────────── MAIN ────────────── -->
+<main class="layout">
+
+  <div class="page-header">
+    <div class="page-title">🛠️ システム管理コンソール</div>
+    <div class="page-subtitle">エラーログ・ヘルスチェック・Discord通知 — 開発者専用</div>
+  </div>
+
+  <!-- HEALTH STATUS -->
+  <section class="section">
+    <div class="section-label">System Health</div>
+    <div class="health-grid" id="health-grid">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  </section>
+
+  <!-- ACTIONS -->
+  <section class="section">
+    <div class="section-label">Actions</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;">
+      <button class="btn btn-discord" id="btn-test-discord" onclick="testDiscord()">
+        <span>🎮</span> Discord テスト通知
+      </button>
+      <button class="btn btn-green" id="btn-test-error" onclick="triggerTestError()">
+        <span>💥</span> テストエラー発生
+      </button>
+    </div>
+  </section>
+
+  <!-- ERROR LOGS -->
+  <section class="section">
+    <div class="section-label">Error Logs</div>
+
+    <div class="action-bar">
+      <label class="toggle-label">
+        <input type="checkbox" id="show-dismissed-toggle" onchange="loadErrors()" />
+        既読を表示
+      </label>
+      <select id="limit-select" onchange="loadErrors()">
+        <option value="20">20件</option>
+        <option value="50" selected>50件</option>
+        <option value="100">100件</option>
+      </select>
+      <div class="action-bar-right">
+        <button class="btn btn-ghost" onclick="loadErrors()">🔄 更新</button>
+        <button class="btn btn-danger" id="btn-dismiss-all" onclick="dismissAll()">✓ 全て既読</button>
+      </div>
+    </div>
+
+    <div id="error-list" class="error-list">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast-container"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// Utilities
+// ─────────────────────────────────────────────
+
+function showToast(msg, type = 'info', duration = 3500) {
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => el.remove(), 310);
+  }, duration);
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('ja-JP', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false
+    });
+  } catch { return iso; }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─────────────────────────────────────────────
+// Health Check
+// ─────────────────────────────────────────────
+
+async function loadHealth() {
+  const grid = document.getElementById('health-grid');
+  try {
+    const resp = await fetch('/api/system/health');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const d = await resp.json();
+
+    grid.innerHTML = `
+      ${healthCard('🗄️', 'データベース',
+        d.db ? 'ONLINE' : 'ERROR',
+        d.db ? 'ok' : 'error',
+        d.db ? '接続正常' : '接続失敗')}
+      ${healthCard('📲', 'LINE API',
+        d.line_api ? 'CONFIGURED' : 'MISSING',
+        d.line_api ? 'ok' : 'warn',
+        d.line_api ? 'トークン設定済み' : 'トークン未設定')}
+      ${healthCard('🎮', 'Discord Webhook',
+        d.discord_webhook ? 'CONFIGURED' : 'MISSING',
+        d.discord_webhook ? 'ok' : 'warn',
+        d.discord_webhook ? 'Webhook URL設定済み' : 'URL未設定')}
+      ${healthCard('🚨', '未読エラー',
+        String(d.undismissed_errors),
+        d.undismissed_errors === 0 ? 'ok' : d.undismissed_errors < 5 ? 'warn' : 'error',
+        '要対応のエラー件数')}
+    `;
+  } catch (e) {
+    grid.innerHTML = `<div style="color:var(--red);font-size:13px;padding:16px;">ヘルスチェック取得失敗: ${escapeHtml(String(e))}</div>`;
+  }
+}
+
+function healthCard(icon, label, value, level, sub) {
+  const levelClass = level; // ok / warn / error / info
+  const pillClass = level === 'error' ? 'status-err' : level === 'warn' ? 'status-warn' : 'status-ok';
+  const pillText = level === 'error' ? 'ERROR' : level === 'warn' ? 'WARN' : 'OK';
+  return `
+    <div class="health-card">
+      <div class="health-card-top">
+        <span class="health-card-icon">${icon}</span>
+        <span class="status-pill ${pillClass}">${pillText}</span>
+      </div>
+      <div class="health-card-label">${label}</div>
+      <div class="health-card-value ${levelClass}">${escapeHtml(value)}</div>
+      <div class="health-card-sub">${escapeHtml(sub)}</div>
+    </div>
+  `;
+}
+
+// ─────────────────────────────────────────────
+// Error Logs
+// ─────────────────────────────────────────────
+
+async function loadErrors() {
+  const container = document.getElementById('error-list');
+  const showDismissed = document.getElementById('show-dismissed-toggle').checked;
+  const limit = document.getElementById('limit-select').value;
+
+  container.innerHTML = `
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  `;
+
+  try {
+    const url = `/api/system/errors?show_dismissed=${showDismissed}&limit=${limit}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const logs = await resp.json();
+
+    if (!logs.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">✅</div>
+          <div class="title">エラーログなし</div>
+          <div class="sub">${showDismissed ? '履歴はありません' : '未読エラーはありません'}</div>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '';
+    logs.forEach(log => {
+      container.appendChild(buildErrorCard(log));
+    });
+  } catch (e) {
+    container.innerHTML = `<div style="color:var(--red);font-size:13px;padding:16px;">エラーログ取得失敗: ${escapeHtml(String(e))}</div>`;
+  }
+}
+
+function buildErrorCard(log) {
+  const card = document.createElement('div');
+  card.className = `error-card${log.dismissed ? ' dismissed' : ''}`;
+  card.dataset.id = log.id;
+
+  const discordBadge = log.discord_notified
+    ? `<span class="discord-badge">🎮 Discord通知済</span>`
+    : `<span class="discord-badge unsent">🔕 未通知</span>`;
+
+  const typeClass = log.dismissed ? ' dismissed' : '';
+  card.innerHTML = `
+    <div class="error-header" onclick="toggleBody(${log.id})">
+      <span class="error-type-badge${typeClass}">${escapeHtml(log.error_type || 'UnknownError')}</span>
+      <span class="error-url">${escapeHtml(log.method || '')} ${escapeHtml(log.url || '')}</span>
+      ${discordBadge}
+      <span class="error-time">${formatDate(log.timestamp)}</span>
+    </div>
+    <div class="error-message">${escapeHtml(log.error_message || '（メッセージなし）')}</div>
+    <div class="error-body" id="body-${log.id}">
+      <pre class="traceback-block">${escapeHtml(log.traceback_text || '（スタックトレースなし）')}</pre>
+      <div class="error-footer">
+        ${!log.dismissed ? `<button class="btn btn-ghost" style="font-size:12px;" onclick="dismissOne(${log.id})">✓ 既読にする</button>` : `<span style="font-size:12px;color:var(--text-dim);">既読済み</span>`}
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+function toggleBody(id) {
+  const body = document.getElementById(`body-${id}`);
+  if (!body) return;
+  body.classList.toggle('open');
+}
+
+async function dismissOne(id) {
+  try {
+    const resp = await fetch(`/api/system/errors/${id}/dismiss`, { method: 'POST' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    showToast('既読にしました', 'success');
+    await loadErrors();
+    await loadHealth();
+  } catch (e) {
+    showToast('失敗しました: ' + e.message, 'error');
+  }
+}
+
+async function dismissAll() {
+  if (!confirm('全てのエラーログを既読にしますか？')) return;
+  try {
+    const resp = await fetch('/api/system/errors/dismiss-all', { method: 'POST' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    showToast('全て既読にしました ✓', 'success');
+    await loadErrors();
+    await loadHealth();
+  } catch (e) {
+    showToast('失敗しました: ' + e.message, 'error');
+  }
+}
+
+// ─────────────────────────────────────────────
+// Actions
+// ─────────────────────────────────────────────
+
+async function testDiscord() {
+  const btn = document.getElementById('btn-test-discord');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> 送信中...`;
+  try {
+    const resp = await fetch('/api/system/test-discord', { method: 'POST' });
+    const data = await resp.json();
+    if (resp.ok) {
+      showToast('✅ Discord にテスト通知を送信しました！', 'success', 4000);
+    } else {
+      showToast('❌ ' + (data.detail || '送信失敗'), 'error', 5000);
+    }
+  } catch (e) {
+    showToast('❌ 通信エラー: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>🎮</span> Discord テスト通知`;
+  }
+}
+
+async function triggerTestError() {
+  const btn = document.getElementById('btn-test-error');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> 実行中...`;
+  try {
+    const resp = await fetch('/api/system/test-error', { method: 'POST' });
+    // This endpoint always raises an error, so we expect 500
+    if (resp.status === 500) {
+      showToast('💥 テストエラーを発生させました。Discord通知とログを確認してください。', 'info', 5000);
+      setTimeout(async () => {
+        await loadErrors();
+        await loadHealth();
+      }, 1500);
+    } else {
+      showToast('想定外のレスポンス: ' + resp.status, 'error');
+    }
+  } catch (e) {
+    // fetch itself might not error for 500 responses, but just in case
+    showToast('テストエラーを発生させました', 'info', 5000);
+    setTimeout(async () => {
+      await loadErrors();
+      await loadHealth();
+    }, 1500);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>💥</span> テストエラー発生`;
+  }
+}
+
+// ─────────────────────────────────────────────
+// Auto Refresh
+// ─────────────────────────────────────────────
+
+let refreshTimer;
+let countdown = 30;
+
+function startCountdown() {
+  clearInterval(refreshTimer);
+  countdown = 30;
+  const label = document.getElementById('next-refresh-label');
+  refreshTimer = setInterval(() => {
+    countdown--;
+    if (label) label.textContent = countdown + 's';
+    if (countdown <= 0) {
+      countdown = 30;
+      loadHealth();
+      loadErrors();
+    }
+  }, 1000);
+}
+
+// ─────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────
+
+(async function init() {
+  await Promise.all([loadHealth(), loadErrors()]);
+  startCountdown();
+})();
+</script>
+</body>
+</html>

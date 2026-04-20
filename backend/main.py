@@ -9,7 +9,9 @@ from dotenv import load_dotenv
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import logging
-import traceback # Added traceback
+import traceback
+import requests as http_requests
+from datetime import datetime, timezone
 
 import models
 import schemas
@@ -38,6 +40,7 @@ load_dotenv()
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "")
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET", "")
 ADMIN_LINE_USER_ID = os.getenv("ADMIN_LINE_USER_ID", "")  # 管理者のLINEユーザーIDまたはグループID
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
@@ -146,6 +149,11 @@ def serve_index_dashboard_named(request: Request, credentials: HTTPBasicCredenti
 def serve_admin_dashboard(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
     authenticate_admin(credentials)
     return inject_admin_token(get_html_content("admin.html"), credentials)
+
+@app.get("/system-admin.html", response_class=HTMLResponse)
+def serve_system_admin(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
+    authenticate_admin(credentials)
+    return inject_admin_token(get_html_content("system_admin.html"), credentials)
 
 # --- Inquiry Endpoints ---
 
@@ -840,11 +848,195 @@ import logging
 
 logger = logging.getLogger("hubcargo")
 
+# ───────────────────────────────────────────
+# Discord エラー通知
+# ───────────────────────────────────────────
+
+def send_discord_error_notification(method: str, url: str, error_type: str, error_message: str, tb_text: str) -> bool:
+    """Discord Webhook にエラー Embed を送信し、成功したら True を返す"""
+    if not DISCORD_WEBHOOK_URL:
+        return False
+    try:
+        jst_now = datetime.now(timezone.utc).astimezone()
+        timestamp_str = jst_now.strftime("%Y-%m-%d %H:%M:%S JST")
+
+        # スタックトレースは先頭1500文字まで
+        tb_short = tb_text[-1500:] if len(tb_text) > 1500 else tb_text
+
+        embed = {
+            "title": "🚨 システムエラー検知",
+            "color": 0xFF3333,
+            "fields": [
+                {"name": "エラー種別", "value": f"`{error_type}`", "inline": True},
+                {"name": "発生箇所", "value": f"`{method} {url}`", "inline": True},
+                {"name": "時刻", "value": timestamp_str, "inline": False},
+                {"name": "メッセージ", "value": f"```{error_message[:500]}```", "inline": False},
+                {"name": "スタックトレース", "value": f"```python\n{tb_short}\n```", "inline": False},
+            ],
+            "footer": {"text": "HubCargo System Monitor"},
+            "timestamp": jst_now.isoformat(),
+        }
+        payload = {"embeds": [embed]}
+        resp = http_requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
+        return resp.status_code in (200, 204)
+    except Exception as e:
+        logger.warning(f"Discord notification failed: {e}")
+        return False
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    # スタックトレースはサーバーログにのみ記録し、レスポンスには含めない
-    logger.error(f"Unhandled exception on {request.method} {request.url}: {exc}", exc_info=True)
+    tb_text = traceback.format_exc()
+    error_type = type(exc).__name__
+    error_message = str(exc)
+    method = request.method
+    url_str = str(request.url)
+
+    # サーバーログに記録
+    logger.error(f"Unhandled exception on {method} {url_str}: {exc}", exc_info=True)
+
+    # DBにエラーログを保存
+    discord_ok = False
+    try:
+        from database import SessionLocal
+        err_db = SessionLocal()
+        try:
+            err_log = models.SystemErrorLog(
+                method=method,
+                url=url_str,
+                error_type=error_type,
+                error_message=error_message,
+                traceback_text=tb_text,
+                dismissed=False,
+                discord_notified=False,
+            )
+            err_db.add(err_log)
+            err_db.commit()
+
+            # Discord 通知
+            discord_ok = send_discord_error_notification(method, url_str, error_type, error_message, tb_text)
+            if discord_ok:
+                err_log.discord_notified = True
+                err_db.commit()
+        finally:
+            err_db.close()
+    except Exception as log_err:
+        logger.error(f"Failed to log error to DB: {log_err}")
+        # DBに保存できなくても Discord には送る
+        discord_ok = send_discord_error_notification(method, url_str, error_type, error_message, tb_text)
+
     return JSONResponse(
         status_code=500,
         content={"message": "内部エラーが発生しました。しばらく待ってから再試行してください。"}
     )
+
+
+# ───────────────────────────────────────────
+# システム管理 API
+# ───────────────────────────────────────────
+
+@app.get("/api/system/health")
+def system_health(db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
+    """DBとLINE APIの基本的な接続確認"""
+    db_ok = False
+    try:
+        from sqlalchemy import text
+        db.execute(text("SELECT 1"))
+        db_ok = True
+    except Exception:
+        pass
+
+    line_ok = bool(LINE_CHANNEL_ACCESS_TOKEN)
+    discord_ok = bool(DISCORD_WEBHOOK_URL)
+
+    undismissed_count = 0
+    try:
+        undismissed_count = db.query(models.SystemErrorLog).filter(
+            models.SystemErrorLog.dismissed == False
+        ).count()
+    except Exception:
+        pass
+
+    return {
+        "db": db_ok,
+        "line_api": line_ok,
+        "discord_webhook": discord_ok,
+        "undismissed_errors": undismissed_count,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@app.get("/api/system/errors")
+def get_error_logs(
+    skip: int = 0,
+    limit: int = 50,
+    show_dismissed: bool = False,
+    db: Session = Depends(get_db),
+    _ = Depends(authenticate_admin)
+):
+    """エラーログ一覧を返す（新しい順）"""
+    query = db.query(models.SystemErrorLog)
+    if not show_dismissed:
+        query = query.filter(models.SystemErrorLog.dismissed == False)
+    logs = query.order_by(models.SystemErrorLog.timestamp.desc()).offset(skip).limit(limit).all()
+    return [
+        {
+            "id": log.id,
+            "timestamp": log.timestamp.isoformat() if log.timestamp else None,
+            "method": log.method,
+            "url": log.url,
+            "error_type": log.error_type,
+            "error_message": log.error_message,
+            "traceback_text": log.traceback_text,
+            "dismissed": log.dismissed,
+            "discord_notified": log.discord_notified,
+        }
+        for log in logs
+    ]
+
+
+@app.post("/api/system/errors/{error_id}/dismiss")
+def dismiss_error_log(
+    error_id: int,
+    db: Session = Depends(get_db),
+    _ = Depends(authenticate_admin)
+):
+    """エラーログを既読にする"""
+    log = db.query(models.SystemErrorLog).filter(models.SystemErrorLog.id == error_id).first()
+    if not log:
+        raise HTTPException(status_code=404, detail="Error log not found")
+    log.dismissed = True
+    db.commit()
+    return {"ok": True}
+
+
+@app.post("/api/system/errors/dismiss-all")
+def dismiss_all_error_logs(db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
+    """全エラーログを既読にする"""
+    db.query(models.SystemErrorLog).filter(
+        models.SystemErrorLog.dismissed == False
+    ).update({"dismissed": True})
+    db.commit()
+    return {"ok": True}
+
+
+@app.post("/api/system/test-discord")
+def test_discord_notification(_ = Depends(authenticate_admin)):
+    """Discord Webhook の疎通テスト"""
+    ok = send_discord_error_notification(
+        method="TEST",
+        url="/api/system/test-discord",
+        error_type="TestNotification",
+        error_message="これはテスト通知です。Discord Webhook が正常に動作しています。",
+        tb_text="テスト通知のため、スタックトレースはありません。"
+    )
+    if ok:
+        return {"ok": True, "message": "Discord 通知を送信しました ✅"}
+    else:
+        raise HTTPException(status_code=500, detail="Discord 通知の送信に失敗しました。Webhook URL を確認してください。")
+
+
+@app.post("/api/system/test-error")
+def trigger_test_error(_ = Depends(authenticate_admin)):
+    """意図的にエラーを発生させて通知フローのテストを行う"""
+    raise ValueError("これはシステム管理者によって手動でトリガーされたテストエラーです。")

@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Boolean, Column, Integer, String, Text, DateTime, ForeignKey, Float
 from sqlalchemy.sql import func
 from database import Base
 
@@ -26,3 +26,16 @@ class Partner(Base):
     icon_emoji = Column(String, default="🏢")
     is_active = Column(Boolean, default=True)
     sort_order = Column(Integer, default=0)
+
+class SystemErrorLog(Base):
+    __tablename__ = "system_error_logs"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    method = Column(String, nullable=True)       # GET / POST など
+    url = Column(Text, nullable=True)            # リクエストURL
+    error_type = Column(String, nullable=True)   # 例外クラス名
+    error_message = Column(Text, nullable=True)  # 例外メッセージ
+    traceback_text = Column(Text, nullable=True) # スタックトレース
+    dismissed = Column(Boolean, default=False)   # 既読フラグ
+    discord_notified = Column(Boolean, default=False)  # Discord通知済みフラグ
