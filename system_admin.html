@@ -811,27 +811,39 @@ async function triggerTestError() {
   }
 }
 
+
 // ─────────────────────────────────────────────
-// Auto Refresh
+// Auto Refresh (pauses when tab is hidden)
 // ─────────────────────────────────────────────
 
+const INTERVAL_SEC = 60; // 60秒ごとに更新（タブ表示中のみ）
 let refreshTimer;
-let countdown = 30;
+let countdown = INTERVAL_SEC;
 
 function startCountdown() {
   clearInterval(refreshTimer);
-  countdown = 30;
+  countdown = INTERVAL_SEC;
   const label = document.getElementById('next-refresh-label');
   refreshTimer = setInterval(() => {
+    if (document.hidden) return; // タブが非表示の間はスキップ
     countdown--;
     if (label) label.textContent = countdown + 's';
     if (countdown <= 0) {
-      countdown = 30;
+      countdown = INTERVAL_SEC;
       loadHealth();
       loadErrors();
     }
   }, 1000);
 }
+
+// タブが再表示された時に即時更新
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    countdown = INTERVAL_SEC;
+    loadHealth();
+    loadErrors();
+  }
+});
 
 // ─────────────────────────────────────────────
 // Init
