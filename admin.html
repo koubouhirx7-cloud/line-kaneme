@@ -487,22 +487,62 @@
         // ==========================
         // Auth & Auto Logout Logic
         // ==========================
-        function checkAutoLogout() {
-            const LOGOUT_MS = 6 * 60 * 60 * 1000; // 6 hours
-            const loginTime = localStorage.getItem('hubcargo_login_time');
-            const now = Date.now();
+        const ABSOLUTE_TIMEOUT_MS = 6 * 60 * 60 * 1000;  // 絶対タイムアウト: 6時間
+        const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;     // 無操作タイムアウト: 30分
 
-            if (!loginTime) {
-                localStorage.setItem('hubcargo_login_time', now.toString());
-            } else if (now - parseInt(loginTime) > LOGOUT_MS) {
-                alert("セキュリティ保護のため、自動的にログアウトしました。再度ログインしてください。");
-                localStorage.removeItem('hubcargo_login_time');
-                // Basic認証のキャッシュを上書きしてログアウトさせる特殊URL
-                window.location.href = 'https://logout@' + window.location.host + '/admin.html';
+        function initSessionTimers() {
+            const now = Date.now().toString();
+            if (!sessionStorage.getItem('hubcargo_login_time')) {
+                sessionStorage.setItem('hubcargo_login_time', now);
+            }
+            sessionStorage.setItem('hubcargo_last_activity', now);
+        }
+
+        function updateActivity() {
+            sessionStorage.setItem('hubcargo_last_activity', Date.now().toString());
+        }
+
+        function performLogout(reason) {
+            sessionStorage.removeItem('hubcargo_login_time');
+            sessionStorage.removeItem('hubcargo_last_activity');
+            // 旧localStorageのクリーンアップ
+            localStorage.removeItem('hubcargo_login_time');
+            alert(reason);
+            // Basic認証のキャッシュをクリアして再認証を強制
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', '/api/system/health', false);
+            xhr.setRequestHeader('Authorization', 'Basic ' + btoa('logout:logout'));
+            try { xhr.send(); } catch(e) {}
+            window.location.reload();
+        }
+
+        function checkAutoLogout() {
+            const now = Date.now();
+            const loginTime = parseInt(sessionStorage.getItem('hubcargo_login_time') || '0');
+            const lastActivity = parseInt(sessionStorage.getItem('hubcargo_last_activity') || '0');
+
+            if (!loginTime) return; // 初期化前
+
+            // 絶対タイムアウト（6時間）
+            if (now - loginTime > ABSOLUTE_TIMEOUT_MS) {
+                performLogout("セキュリティ保護のため、ログインから6時間が経過しました。\n再度ログインしてください。");
+                return;
+            }
+
+            // 無操作タイムアウト（30分）
+            if (lastActivity && now - lastActivity > INACTIVITY_TIMEOUT_MS) {
+                performLogout("30分間操作がなかったため、自動的にログアウトしました。\n再度ログインしてください。");
+                return;
             }
         }
 
+        // ユーザー操作を検知して最終操作時刻を更新
+        ['click', 'keydown', 'mousemove', 'touchstart', 'scroll'].forEach(evt => {
+            document.addEventListener(evt, updateActivity, { passive: true });
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
+            initSessionTimers();
             checkAutoLogout();
             fetchPartners();
             fetchInquiries();
