@@ -41,6 +41,7 @@ LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "")
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET", "")
 ADMIN_LINE_USER_ID = os.getenv("ADMIN_LINE_USER_ID", "")  # 管理者のLINEユーザーIDまたはグループID
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
+CLIENT_DISCORD_WEBHOOK_URL = os.getenv("CLIENT_DISCORD_WEBHOOK_URL", "")  # 顧客向け問い合わせ通知用
 
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
@@ -186,6 +187,21 @@ def create_inquiry(inquiry: schemas.InquiryCreate, background_tasks: BackgroundT
             )
         except Exception as e:
             print(f"Failed to schedule admin notification: {e}")
+
+    # 顧客向けDiscord通知
+    if CLIENT_DISCORD_WEBHOOK_URL:
+        try:
+            background_tasks.add_task(
+                send_client_discord_new_inquiry,
+                db_inquiry.id,
+                db_inquiry.customer_name,
+                db_inquiry.phone_number,
+                db_inquiry.pickup_location,
+                db_inquiry.delivery_location,
+                db_inquiry.detail
+            )
+        except Exception as e:
+            print(f"Failed to schedule client Discord notification: {e}")
 
     return db_inquiry
 
@@ -852,6 +868,45 @@ logger = logging.getLogger("hubcargo")
 # Discord エラー通知
 # ───────────────────────────────────────────
 
+def send_client_discord_new_inquiry(inquiry_id: str, customer_name: str, phone_number: str, pickup_location: str, delivery_location: str, detail: str) -> bool:
+    """顧客のDiscordサーバーに新規問い合わせ通知を送信する"""
+    if not CLIENT_DISCORD_WEBHOOK_URL:
+        return False
+    try:
+        jst_now = datetime.now(timezone.utc).astimezone()
+        timestamp_str = jst_now.strftime("%Y/%m/%d %H:%M")
+
+        embed = {
+            "title": "📦 新しい配送のお問い合わせ",
+            "color": 0x2764E5,  # HubCargoブランドカラー
+            "fields": [
+                {"name": "🆔 受付番号", "value": f"`{inquiry_id}`", "inline": True},
+                {"name": "⏰ 受付時刻", "value": timestamp_str, "inline": True},
+                {"name": "👤 お客様名", "value": customer_name or "未入力", "inline": False},
+                {"name": "📞 電話番号", "value": phone_number or "未入力", "inline": True},
+                {"name": "📍 ご住所", "value": pickup_location or "未入力", "inline": True},
+                {"name": "📋 お荷物番号", "value": delivery_location or "未入力", "inline": False},
+                {"name": "💬 詳細", "value": (detail or "なし")[:500], "inline": False},
+            ],
+            "footer": {"text": "HubCargo 配送管理システム"},
+            "timestamp": jst_now.isoformat(),
+        }
+        payload = {
+            "content": "🔔 **新しいお問い合わせが届きました！** 管理画面をご確認ください。",
+            "embeds": [embed]
+        }
+        resp = http_requests.post(CLIENT_DISCORD_WEBHOOK_URL, json=payload, timeout=5)
+        if resp.status_code in (200, 204):
+            print(f"Client Discord notification sent for {inquiry_id}")
+            return True
+        else:
+            print(f"Client Discord notification failed: HTTP {resp.status_code}")
+            return False
+    except Exception as e:
+        print(f"Client Discord notification error: {e}")
+        return False
+
+
 def send_discord_error_notification(method: str, url: str, error_type: str, error_message: str, tb_text: str) -> bool:
     """Discord Webhook にエラー Embed を送信し、成功したら True を返す"""
     if not DISCORD_WEBHOOK_URL:
@@ -948,6 +1003,7 @@ def system_health(db: Session = Depends(get_db), _ = Depends(authenticate_admin)
 
     line_ok = bool(LINE_CHANNEL_ACCESS_TOKEN)
     discord_ok = bool(DISCORD_WEBHOOK_URL)
+    client_discord_ok = bool(CLIENT_DISCORD_WEBHOOK_URL)
 
     undismissed_count = 0
     try:
@@ -961,6 +1017,7 @@ def system_health(db: Session = Depends(get_db), _ = Depends(authenticate_admin)
         "db": db_ok,
         "line_api": line_ok,
         "discord_webhook": discord_ok,
+        "client_discord_webhook": client_discord_ok,
         "undismissed_errors": undismissed_count,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
