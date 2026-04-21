@@ -500,14 +500,28 @@
     <span class="badge">Developer Console</span>
   </div>
   <div class="topbar-right">
+    <div class="refresh-indicator" title="セッション残り時間">
+      🔒 <span id="session-timer-label" style="color:var(--green);">60:00</span>
+    </div>
     <div class="refresh-indicator">
       <div class="refresh-dot"></div>
-      <span id="next-refresh-label">30s</span>
+      <span id="next-refresh-label">60s</span>
     </div>
     <a href="/admin.html" class="topbar-link">管理画面</a>
     <a href="/" class="topbar-link">トップ</a>
+    <button onclick="sessionLogout()" class="topbar-link" style="background:none;border:none;cursor:pointer;font:inherit;color:var(--text-secondary);">🚪 ログアウト</button>
   </div>
 </header>
+
+<!-- ────────────── LOCK SCREEN ────────────── -->
+<div id="lock-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;flex-direction:column;">
+  <div style="text-align:center;max-width:400px;padding:40px;">
+    <div style="font-size:64px;margin-bottom:20px;">🔒</div>
+    <h2 style="color:var(--text-primary);font-size:24px;margin-bottom:8px;">セッション期限切れ</h2>
+    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:24px;">セキュリティ保護のため、1時間でセッションを自動終了しました。<br>続行するには再ログインしてください。</p>
+    <button onclick="sessionLogout()" style="padding:12px 32px;background:var(--green);color:#000;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">🔑 再ログイン</button>
+  </div>
+</div>
 
 <!-- ────────────── MAIN ────────────── -->
 <main class="layout">
@@ -918,10 +932,75 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // ─────────────────────────────────────────────
+// Session Timeout (1時間で自動ロック)
+// ─────────────────────────────────────────────
+
+const SESSION_TIMEOUT_MS = 60 * 60 * 1000; // 1時間
+
+function initSession() {
+  if (!sessionStorage.getItem('admin_login_time')) {
+    sessionStorage.setItem('admin_login_time', Date.now().toString());
+  }
+}
+
+function getSessionRemaining() {
+  const loginTime = parseInt(sessionStorage.getItem('admin_login_time') || '0');
+  if (!loginTime) return SESSION_TIMEOUT_MS;
+  return Math.max(0, SESSION_TIMEOUT_MS - (Date.now() - loginTime));
+}
+
+function formatTime(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function showLockScreen() {
+  const overlay = document.getElementById('lock-overlay');
+  overlay.style.display = 'flex';
+  clearInterval(refreshTimer);
+}
+
+function sessionLogout() {
+  sessionStorage.removeItem('admin_login_time');
+  // HTTP Basic Auth の資格情報をクリアするために 401 を強制
+  const xhr = new XMLHttpRequest();
+  xhr.open('GET', '/api/system/health', false);
+  xhr.setRequestHeader('Authorization', 'Basic ' + btoa('logout:logout'));
+  try { xhr.send(); } catch(e) {}
+  // ページをリロードして再認証を促す
+  window.location.reload();
+}
+
+function startSessionTimer() {
+  const label = document.getElementById('session-timer-label');
+  setInterval(() => {
+    const remaining = getSessionRemaining();
+    if (label) {
+      label.textContent = formatTime(remaining);
+      // 残り10分で黄色、5分で赤
+      if (remaining <= 5 * 60 * 1000) {
+        label.style.color = 'var(--red)';
+      } else if (remaining <= 10 * 60 * 1000) {
+        label.style.color = 'var(--orange)';
+      } else {
+        label.style.color = 'var(--green)';
+      }
+    }
+    if (remaining <= 0) {
+      showLockScreen();
+    }
+  }, 1000);
+}
+
+// ─────────────────────────────────────────────
 // Init
 // ─────────────────────────────────────────────
 
 (async function init() {
+  initSession();
+  startSessionTimer();
   await Promise.all([loadHealth(), loadErrors()]);
   startCountdown();
 })();
