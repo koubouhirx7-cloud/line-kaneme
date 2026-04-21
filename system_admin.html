@@ -535,10 +535,15 @@
       <button class="btn btn-discord" id="btn-test-discord" onclick="testDiscord()">
         <span>🎮</span> Discord テスト通知
       </button>
-      <button class="btn btn-green" id="btn-test-error" onclick="triggerTestError()">
+      <button class="btn btn-green" id="btn-test-line" onclick="testLinePush()">
+        <span>📲</span> LINE 送信テスト
+      </button>
+      <button class="btn btn-ghost" id="btn-test-error" onclick="triggerTestError()">
         <span>💥</span> テストエラー発生
       </button>
     </div>
+    <!-- LINE Test Results -->
+    <div id="line-test-results" style="display:none;margin-top:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;white-space:pre-wrap;"></div>
   </section>
 
   <!-- ERROR LOGS -->
@@ -779,6 +784,73 @@ async function testDiscord() {
   } finally {
     btn.disabled = false;
     btn.innerHTML = `<span>🎮</span> Discord テスト通知`;
+  }
+}
+
+async function testLinePush() {
+  const btn = document.getElementById('btn-test-line');
+  const resultsDiv = document.getElementById('line-test-results');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> 診断中...`;
+  resultsDiv.style.display = 'block';
+  resultsDiv.textContent = '📲 LINE送信フロー診断を実行中...';
+  
+  try {
+    const resp = await fetch('/api/system/test-line', { method: 'POST' });
+    const data = await resp.json();
+    
+    if (!resp.ok) {
+      resultsDiv.style.borderColor = 'var(--red-border)';
+      resultsDiv.textContent = `❌ HTTP ${resp.status}: ${data.detail || JSON.stringify(data)}`;
+      showToast('LINE診断に失敗しました', 'error');
+      return;
+    }
+    
+    let output = '━━━ LINE送信フロー診断結果 ━━━\n\n';
+    
+    // Step 1
+    const s1 = data.step1_token ? '✅' : '❌';
+    output += `${s1} Step 1: チャネルアクセストークン\n`;
+    output += `   状態: ${data.step1_token ? '設定済み' : '未設定'}\n`;
+    output += `   長さ: ${data.step1_token_length || 0}文字\n`;
+    output += `   先頭: ${data.step1_token_preview || '(empty)'}\n\n`;
+    
+    // Step 2
+    output += `📋 Step 2: アクティブパートナー (${(data.step2_partners || []).length}社)\n`;
+    (data.step2_partners || []).forEach(p => {
+      const icon = p.has_group_id ? '✅' : '⚠️';
+      output += `   ${icon} ID:${p.id} ${p.name} → ${p.line_group_id}\n`;
+    });
+    output += '\n';
+    
+    // Step 3
+    const s3 = data.step3_sdk_init ? '✅' : '❌';
+    output += `${s3} Step 3: LINE SDK初期化 → ${data.step3_sdk_init ? '成功' : '失敗'}\n`;
+    if (data.step3_error) output += `   エラー: ${data.step3_error}\n`;
+    output += '\n';
+    
+    // Step 4
+    const s4result = data.step4_send_result || '(不明)';
+    const s4icon = s4result.startsWith('SUCCESS') ? '✅' : s4result.startsWith('SKIP') ? '⚠️' : '❌';
+    output += `${s4icon} Step 4: 実送信テスト\n`;
+    output += `   結果: ${s4result}\n`;
+    
+    resultsDiv.textContent = output;
+    
+    if (s4result.startsWith('SUCCESS')) {
+      resultsDiv.style.borderColor = 'var(--green-border)';
+      showToast('✅ LINE送信テスト成功！グループを確認してください', 'success', 5000);
+    } else {
+      resultsDiv.style.borderColor = 'var(--orange-border)';
+      showToast('⚠️ LINE送信テストに問題があります', 'error', 5000);
+    }
+  } catch (e) {
+    resultsDiv.style.borderColor = 'var(--red-border)';
+    resultsDiv.textContent = `❌ 通信エラー: ${e.message}`;
+    showToast('LINE診断に失敗しました: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>📲</span> LINE 送信テスト`;
   }
 }
 

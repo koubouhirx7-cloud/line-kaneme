@@ -1040,3 +1040,71 @@ def test_discord_notification(_ = Depends(authenticate_admin)):
 def trigger_test_error(_ = Depends(authenticate_admin)):
     """意図的にエラーを発生させて通知フローのテストを行う"""
     raise ValueError("これはシステム管理者によって手動でトリガーされたテストエラーです。")
+
+
+@app.post("/api/system/test-line")
+def test_line_push(db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
+    """LINE送信の全フェーズを診断する"""
+    results = {
+        "step1_token": False,
+        "step2_partners": [],
+        "step3_sdk_init": False,
+        "step4_send_result": None,
+    }
+    
+    # Step 1: トークン確認
+    token = LINE_CHANNEL_ACCESS_TOKEN
+    results["step1_token"] = bool(token)
+    results["step1_token_length"] = len(token) if token else 0
+    results["step1_token_preview"] = (token[:10] + "...") if token and len(token) > 10 else "(empty)"
+    
+    if not token:
+        results["step4_send_result"] = "SKIP: トークンが空です"
+        return results
+    
+    # Step 2: アクティブなパートナーとline_group_id
+    partners = db.query(models.Partner).filter(models.Partner.is_active == True).all()
+    for p in partners:
+        results["step2_partners"].append({
+            "id": p.id,
+            "name": p.name,
+            "line_group_id": p.line_group_id or "(NULL)",
+            "has_group_id": bool(p.line_group_id),
+        })
+    
+    # Step 3: SDK初期化テスト
+    try:
+        test_config = Configuration(access_token=token)
+        with ApiClient(test_config) as api_client:
+            line_bot_api = MessagingApi(api_client)
+            results["step3_sdk_init"] = True
+    except Exception as e:
+        results["step3_sdk_init"] = False
+        results["step3_error"] = str(e)
+        return results
+    
+    # Step 4: 最初のアクティブパートナーへテスト送信
+    target = None
+    for p in partners:
+        if p.line_group_id:
+            target = p
+            break
+    
+    if not target:
+        results["step4_send_result"] = "SKIP: line_group_idが設定されたアクティブパートナーがいません"
+        return results
+    
+    try:
+        with ApiClient(test_config) as api_client:
+            line_bot_api = MessagingApi(api_client)
+            line_bot_api.push_message(
+                PushMessageRequest(
+                    to=target.line_group_id,
+                    messages=[TextMessage(text=f"🔧 LINE送信診断テスト\n送信先: {target.name}\nGroup ID: {target.line_group_id}\n時刻: {datetime.now(timezone.utc).isoformat()}")]
+                )
+            )
+            results["step4_send_result"] = f"SUCCESS: {target.name} ({target.line_group_id}) に送信完了"
+    except Exception as e:
+        results["step4_send_result"] = f"FAIL: {type(e).__name__}: {str(e)}"
+    
+    return results
