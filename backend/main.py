@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Header, BackgroundTasks
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -253,14 +254,33 @@ def dispatch_inquiry(inquiry_id: str, request_data: schemas.DispatchRequest, bac
     db.refresh(inquiry)
     
     # Send LINE message to partner's line_group_id (Must be synchronous on Vercel)
-    if partner.line_group_id and LINE_CHANNEL_ACCESS_TOKEN:
-        try:
-            send_line_push_message(partner.line_group_id, inquiry, partner)
-        except Exception as e:
-            # Catch LINE API errors (e.g., trying to message a user from an old channel)
-            print(f"Error sending push message to {partner.line_group_id}: {e}")
+    line_status = "skipped"
+    line_detail = ""
     
-    return inquiry
+    if not LINE_CHANNEL_ACCESS_TOKEN:
+        line_detail = "LINE_CHANNEL_ACCESS_TOKEN is empty"
+        logging.warning(f"[DISPATCH] LINE送信スキップ: トークン未設定 (inquiry={inquiry_id})")
+    elif not partner.line_group_id:
+        line_detail = f"partner {partner.id} ({partner.name}) has no line_group_id"
+        logging.warning(f"[DISPATCH] LINE送信スキップ: line_group_id未設定 (inquiry={inquiry_id}, partner={partner.name})")
+    else:
+        try:
+            logging.info(f"[DISPATCH] LINE送信開始: to={partner.line_group_id}, inquiry={inquiry_id}, partner={partner.name}")
+            send_line_push_message(partner.line_group_id, inquiry, partner)
+            line_status = "sent"
+            line_detail = f"sent to {partner.name} ({partner.line_group_id})"
+            logging.info(f"[DISPATCH] LINE送信成功: {line_detail}")
+        except Exception as e:
+            line_status = "failed"
+            line_detail = f"{type(e).__name__}: {str(e)}"
+            logging.error(f"[DISPATCH] LINE送信失敗: {line_detail} (inquiry={inquiry_id}, to={partner.line_group_id})")
+    
+    # レスポンスにLINE送信状態をヘッダーで付与（デバッグ用）
+    from fastapi.responses import JSONResponse
+    response_data = schemas.InquiryResponse.model_validate(inquiry).model_dump()
+    response_data["_line_status"] = line_status
+    response_data["_line_detail"] = line_detail
+    return JSONResponse(content=jsonable_encoder(response_data))
 
 def send_line_push_message(to_id: str, inquiry: models.Inquiry, partner: models.Partner):
     with ApiClient(configuration) as api_client:

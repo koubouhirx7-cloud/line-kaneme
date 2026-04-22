@@ -1220,8 +1220,25 @@
                 });
                 if (!res.ok) throw new Error("Dispatch failed");
 
-                btn.innerHTML = '✔ 送信完了';
-                btn.classList.replace('bg-blue-600', 'bg-gray-400');
+                // LINE送信結果を確認
+                const resData = await res.json();
+                const lineStatus = resData._line_status || 'unknown';
+                const lineDetail = resData._line_detail || '';
+                
+                if (lineStatus === 'sent') {
+                    btn.innerHTML = '✔ LINE送信完了';
+                    btn.classList.replace('bg-blue-600', 'bg-green-600');
+                } else if (lineStatus === 'failed') {
+                    btn.innerHTML = '⚠ 手配済（LINE送信失敗）';
+                    btn.classList.replace('bg-blue-600', 'bg-yellow-500');
+                    alert(`⚠️ 手配は完了しましたが、LINE通知の送信に失敗しました。\n\n原因: ${lineDetail}\n\n協力会社へ直接連絡してください。`);
+                } else {
+                    btn.innerHTML = '✔ 手配完了（LINE未送信）';
+                    btn.classList.replace('bg-blue-600', 'bg-gray-400');
+                    if (lineDetail) {
+                        console.warn(`LINE skipped: ${lineDetail}`);
+                    }
+                }
 
                 document.getElementById('statusText').innerText = "協力会社へ連絡依頼済み（完了報告待ち）";
                 document.getElementById('statusText').classList.add('text-blue-600');
