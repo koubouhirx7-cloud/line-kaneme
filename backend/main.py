@@ -1185,3 +1185,55 @@ def test_line_push(db: Session = Depends(get_db), _ = Depends(authenticate_admin
         results["step4_send_result"] = f"FAIL: {type(e).__name__}: {str(e)}"
     
     return results
+
+
+@app.post("/api/system/test-dispatch")
+def test_dispatch_to_partner(db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
+    """指定パートナーにテスト手配通知（Flex Message）を送信する。partner_idはクエリパラメータで指定"""
+    # partner一覧を返す（partner_idなし）
+    partners = db.query(models.Partner).filter(models.Partner.is_active == True).all()
+    return {
+        "partners": [{"id": p.id, "name": p.name, "line_group_id": p.line_group_id or None} for p in partners]
+    }
+
+
+@app.post("/api/system/test-dispatch/{partner_id}")
+def send_test_dispatch(partner_id: int, db: Session = Depends(get_db), _ = Depends(authenticate_admin)):
+    """指定パートナーにテスト手配通知（実際のFlex Message形式）を送信する"""
+    partner = db.query(models.Partner).filter(models.Partner.id == partner_id).first()
+    if not partner:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    
+    if not partner.line_group_id:
+        return {"ok": False, "error": f"{partner.name} に line_group_id が設定されていません"}
+    
+    if not LINE_CHANNEL_ACCESS_TOKEN:
+        return {"ok": False, "error": "LINE_CHANNEL_ACCESS_TOKEN が未設定です"}
+    
+    # テスト用ダミー inquiry
+    test_inquiry = models.Inquiry(
+        id="TEST-DISPATCH",
+        customer_name="テスト 太郎",
+        phone_number="090-0000-0000",
+        pickup_location="テスト集荷先（これはテスト送信です）",
+        delivery_location="テスト配送先",
+        detail="🔧 これはシステム管理者からのテスト送信です。無視してください。",
+        status="dispatched"
+    )
+    
+    try:
+        send_line_push_message(partner.line_group_id, test_inquiry, partner)
+        return {
+            "ok": True,
+            "message": f"✅ {partner.name} にテスト手配通知を送信しました",
+            "partner_name": partner.name,
+            "line_group_id": partner.line_group_id,
+        }
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": f"{type(e).__name__}: {str(e)}",
+            "partner_name": partner.name,
+            "line_group_id": partner.line_group_id,
+        }
+

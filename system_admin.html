@@ -550,7 +550,7 @@
         <span>🎮</span> Discord テスト通知
       </button>
       <button class="btn btn-green" id="btn-test-line" onclick="testLinePush()">
-        <span>📲</span> LINE 送信テスト
+        <span>📲</span> LINE 診断テスト
       </button>
       <button class="btn btn-ghost" id="btn-test-error" onclick="triggerTestError()">
         <span>💥</span> テストエラー発生
@@ -558,6 +558,21 @@
     </div>
     <!-- LINE Test Results -->
     <div id="line-test-results" style="display:none;margin-top:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;white-space:pre-wrap;"></div>
+    
+    <!-- Test Dispatch to Partner -->
+    <div style="margin-top:20px;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);">
+      <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:12px;">🚚 協力会社テスト手配送信</div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">実際のFlex Message形式でテスト通知を送信します。フォーム入力不要。</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <select id="test-dispatch-partner" style="flex:1;min-width:200px;padding:8px 12px;background:var(--bg-surface);color:var(--text-primary);border:1px solid var(--border);border-radius:var(--radius);font-size:13px;cursor:pointer;">
+          <option value="">読み込み中...</option>
+        </select>
+        <button class="btn btn-green" id="btn-test-dispatch" onclick="sendTestDispatch()" style="white-space:nowrap;">
+          <span>📨</span> テスト手配送信
+        </button>
+      </div>
+      <div id="test-dispatch-result" style="display:none;margin-top:10px;padding:10px;border-radius:var(--radius);font-size:12px;"></div>
+    </div>
   </section>
 
   <!-- ERROR LOGS -->
@@ -868,6 +883,68 @@ async function testLinePush() {
   }
 }
 
+async function loadTestDispatchPartners() {
+  const select = document.getElementById('test-dispatch-partner');
+  try {
+    const resp = await fetch('/api/system/test-dispatch', { method: 'POST' });
+    const data = await resp.json();
+    select.innerHTML = '<option value="">送信先を選択...</option>';
+    (data.partners || []).forEach(p => {
+      const groupId = p.line_group_id ? `(${p.line_group_id.substring(0,8)}...)` : '⚠️ LINE未設定';
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = `${p.name} ${groupId}`;
+      opt.disabled = !p.line_group_id;
+      select.appendChild(opt);
+    });
+  } catch (e) {
+    select.innerHTML = '<option value="">読み込みエラー</option>';
+  }
+}
+
+async function sendTestDispatch() {
+  const select = document.getElementById('test-dispatch-partner');
+  const btn = document.getElementById('btn-test-dispatch');
+  const resultDiv = document.getElementById('test-dispatch-result');
+  const partnerId = select.value;
+  
+  if (!partnerId) {
+    showToast('送信先を選択してください', 'error');
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> 送信中...`;
+  resultDiv.style.display = 'block';
+  resultDiv.textContent = '📨 テスト手配通知を送信中...';
+  resultDiv.style.background = 'var(--bg-surface)';
+  resultDiv.style.color = 'var(--text-secondary)';
+  
+  try {
+    const resp = await fetch(`/api/system/test-dispatch/${partnerId}`, { method: 'POST' });
+    const data = await resp.json();
+    
+    if (data.ok) {
+      resultDiv.textContent = `✅ ${data.message}`;
+      resultDiv.style.background = 'var(--green-bg)';
+      resultDiv.style.color = 'var(--green)';
+      showToast(`${data.partner_name} にテスト手配を送信しました！LINEグループを確認してください`, 'success', 5000);
+    } else {
+      resultDiv.textContent = `❌ 送信失敗: ${data.error}`;
+      resultDiv.style.background = 'var(--red-bg)';
+      resultDiv.style.color = 'var(--red)';
+      showToast('テスト手配の送信に失敗しました', 'error');
+    }
+  } catch (e) {
+    resultDiv.textContent = `❌ 通信エラー: ${e.message}`;
+    resultDiv.style.background = 'var(--red-bg)';
+    resultDiv.style.color = 'var(--red)';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>📨</span> テスト手配送信`;
+  }
+}
+
 async function triggerTestError() {
   const btn = document.getElementById('btn-test-error');
   btn.disabled = true;
@@ -1001,7 +1078,7 @@ function startSessionTimer() {
 (async function init() {
   initSession();
   startSessionTimer();
-  await Promise.all([loadHealth(), loadErrors()]);
+  await Promise.all([loadHealth(), loadErrors(), loadTestDispatchPartners()]);
   startCountdown();
 })();
 </script>
