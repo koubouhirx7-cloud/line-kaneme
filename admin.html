@@ -340,6 +340,25 @@
                                     </p>
                                 </div>
                             </div>
+
+                            <!-- テスト手配送信 -->
+                            <div class="bg-white p-4 rounded-lg border border-green-100 shadow-sm mt-4 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
+                                <h4 class="font-bold text-[11px] mb-2 text-green-800 flex items-center gap-1">
+                                    📨 LINE テスト手配送信
+                                </h4>
+                                <p class="text-[9px] text-gray-500 mb-3">協力会社のLINEグループに、テスト用の手配通知を送信します。</p>
+                                <div class="space-y-2">
+                                    <select id="testDispatchPartnerSelect" class="w-full text-xs border border-gray-200 rounded p-2 focus:ring-1 focus:ring-green-500 focus:border-green-500 outline-none transition">
+                                        <option value="">送信先を選択...</option>
+                                    </select>
+                                    <button onclick="sendAdminTestDispatch()" id="btn-admin-test-dispatch"
+                                        class="w-full bg-green-600 hover:bg-green-700 text-white text-[11px] font-bold py-2 rounded shadow-sm transition-colors">
+                                        📨 テスト手配を送信
+                                    </button>
+                                    <p id="testDispatchResult" class="text-[10px] mt-1 hidden text-center py-2 rounded"></p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -606,6 +625,7 @@
                 allPartners = await res.json();
                 renderSettingsPartners(allPartners);
                 renderDispatchPartnerMenu(allPartners);
+                populateTestDispatchSelect(allPartners);
             } catch (err) {
                 console.error("Failed to load partners", err);
             }
@@ -1285,6 +1305,56 @@
                 alert("手配依頼の送信に失敗しました");
                 btn.innerHTML = 'この会社へLINE送信';
                 btn.disabled = false;
+            }
+        }
+
+        function populateTestDispatchSelect(partners) {
+            const select = document.getElementById('testDispatchPartnerSelect');
+            if (!select) return;
+            select.innerHTML = '<option value="">送信先を選択...</option>';
+            partners.filter(p => p.is_active).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = `${p.name}${p.line_group_id ? '' : ' ⚠️ LINE未設定'}`;
+                opt.disabled = !p.line_group_id;
+                select.appendChild(opt);
+            });
+        }
+
+        async function sendAdminTestDispatch() {
+            const select = document.getElementById('testDispatchPartnerSelect');
+            const btn = document.getElementById('btn-admin-test-dispatch');
+            const resultEl = document.getElementById('testDispatchResult');
+            const partnerId = select.value;
+
+            if (!partnerId) {
+                alert('送信先を選択してください');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '📨 送信中...';
+            resultEl.classList.remove('hidden');
+            resultEl.textContent = '送信中...';
+            resultEl.className = 'text-[10px] mt-1 text-center py-2 rounded bg-gray-100 text-gray-500';
+
+            try {
+                const res = await fetch(`${API_BASE}/system/test-dispatch/${partnerId}`, { method: 'POST' });
+                const data = await res.json();
+
+                if (data.ok) {
+                    resultEl.textContent = `✅ ${data.message}`;
+                    resultEl.className = 'text-[10px] mt-1 text-center py-2 rounded bg-green-50 text-green-700 border border-green-200';
+                } else {
+                    resultEl.textContent = `❌ ${data.error}`;
+                    resultEl.className = 'text-[10px] mt-1 text-center py-2 rounded bg-red-50 text-red-600 border border-red-200';
+                }
+            } catch (e) {
+                resultEl.textContent = `❌ 通信エラー: ${e.message}`;
+                resultEl.className = 'text-[10px] mt-1 text-center py-2 rounded bg-red-50 text-red-600 border border-red-200';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📨 テスト手配を送信';
             }
         }
 
