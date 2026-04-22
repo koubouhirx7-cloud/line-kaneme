@@ -174,20 +174,20 @@ def create_inquiry(inquiry: schemas.InquiryCreate, background_tasks: BackgroundT
     db.commit()
     db.refresh(db_inquiry)
 
-    # 管理者へのLINE通知（ADMIN_LINE_USER_IDが設定されている場合のみ）
-    if ADMIN_LINE_USER_ID and LINE_CHANNEL_ACCESS_TOKEN:
-        try:
-            background_tasks.add_task(
-                send_admin_new_inquiry_notification,
-                db_inquiry.id,
-                db_inquiry.customer_name,
-                db_inquiry.phone_number,
-                db_inquiry.pickup_location,
-                db_inquiry.delivery_location,
-                db_inquiry.detail
-            )
-        except Exception as e:
-            print(f"Failed to schedule admin notification: {e}")
+    # 管理者へのLINE通知（一時的にオフ）
+    # if ADMIN_LINE_USER_ID and LINE_CHANNEL_ACCESS_TOKEN:
+    #     try:
+    #         background_tasks.add_task(
+    #             send_admin_new_inquiry_notification,
+    #             db_inquiry.id,
+    #             db_inquiry.customer_name,
+    #             db_inquiry.phone_number,
+    #             db_inquiry.pickup_location,
+    #             db_inquiry.delivery_location,
+    #             db_inquiry.detail
+    #         )
+    #     except Exception as e:
+    #         print(f"Failed to schedule admin notification: {e}")
 
     # 顧客向けDiscord通知
     if CLIENT_DISCORD_WEBHOOK_URL:
