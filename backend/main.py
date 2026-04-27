@@ -1113,6 +1113,23 @@ def test_discord_notification(_ = Depends(authenticate_admin)):
         raise HTTPException(status_code=500, detail="Discord 通知の送信に失敗しました。Webhook URL を確認してください。")
 
 
+@app.post("/api/system/test-client-discord")
+def test_client_discord_notification(_ = Depends(authenticate_admin)):
+    """顧客向け Discord Webhook の疎通テスト"""
+    ok = send_client_discord_new_inquiry(
+        inquiry_id="TEST-CLIENT-001",
+        customer_name="テスト 顧客",
+        phone_number="090-0000-0000",
+        pickup_location="テスト集荷先",
+        delivery_location="テスト配送先",
+        detail="これはテスト通知です。顧客向けDiscord Webhookが正常に動作しています。"
+    )
+    if ok:
+        return {"ok": True, "message": "顧客向けDiscord通知を送信しました ✅"}
+    else:
+        raise HTTPException(status_code=500, detail="顧客向けDiscord通知の送信に失敗しました。CLIENT_DISCORD_WEBHOOK_URL を確認してください。")
+
+
 @app.post("/api/system/test-error")
 def trigger_test_error(_ = Depends(authenticate_admin)):
     """意図的にエラーを発生させて通知フローのテストを行う"""

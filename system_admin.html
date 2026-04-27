@@ -549,6 +549,9 @@
       <button class="btn btn-discord" id="btn-test-discord" onclick="testDiscord()">
         <span>🎮</span> Discord テスト通知
       </button>
+      <button class="btn btn-discord" id="btn-test-client-discord" onclick="testClientDiscord()" style="background:#2764E5;">
+        <span>🎮</span> 顧客用Discord通知
+      </button>
       <button class="btn btn-green" id="btn-test-line" onclick="testLinePush()">
         <span>📲</span> LINE 診断テスト
       </button>
@@ -813,6 +816,26 @@ async function testDiscord() {
   } finally {
     btn.disabled = false;
     btn.innerHTML = `<span>🎮</span> Discord テスト通知`;
+  }
+}
+
+async function testClientDiscord() {
+  const btn = document.getElementById('btn-test-client-discord');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> 送信中...`;
+  try {
+    const resp = await fetch('/api/system/test-client-discord', { method: 'POST' });
+    const data = await resp.json();
+    if (resp.ok) {
+      showToast('✅ ' + (data.message || '顧客向けDiscordにテスト通知を送信しました！'), 'success', 4000);
+    } else {
+      showToast('❌ ' + (data.detail || '送信失敗'), 'error', 5000);
+    }
+  } catch (e) {
+    showToast('❌ 通信エラー: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>🎮</span> 顧客用Discord通知`;
   }
 }
 

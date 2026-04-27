@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配車・手配システム（LINE統合） 開発費用および市場価値算出レポート</title>
+    <style>
+        /* 画面表示用スタイリング */
+        body {
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .paper {
+            background-color: #fff;
+            width: 210mm; /* A4幅 */
+            min-height: 297mm; /* A4高さ */
+            margin: 0 auto;
+            padding: 25mm 20mm; /* 余白 */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 22pt;
+            text-align: center;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+
+        h2 {
+            font-size: 14pt;
+            color: #34495e;
+            border-left: 5px solid #3498db;
+            padding-left: 10px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        h3 {
+            font-size: 12pt;
+            color: #2c3e50;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        p, li {
+            font-size: 10.5pt; /* 印刷に最適な標準サイズ */
+            color: #444;
+        }
+
+        .summary-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+
+        .summary-box h3 {
+            margin-top: 0;
+            color: #c0392b;
+            text-align: center;
+        }
+
+        .price-highlight {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #c0392b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 10px;
+            font-size: 10pt;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            text-align: left;
+            color: #334155;
+        }
+
+        .total-row {
+            font-weight: bold;
+            background-color: #e2e8f0;
+        }
+
+        .sources {
+            font-size: 9pt;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+            margin-top: 40px;
+        }
+
+        .sources a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        /* 印刷時の設定（A4サイズ） */
+        @media print {
+            body {
+                background-color: #fff;
+                padding: 0;
+                margin: 0;
+                -webkit-print-color-adjust: exact; /* 背景色を印刷に反映 */
+                print-color-adjust: exact;
+            }
+            .paper {
+                box-shadow: none;
+                margin: 0;
+                width: 100%;
+                min-height: auto;
+                padding: 0; /* ブラウザの余白設定に任せるか、任意で調整 */
+            }
+            @page {
+                size: A4;
+                margin: 20mm;
+            }
+            /* リンクのURLを印刷しない */
+            a[href]:after {
+                content: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="paper">
+    <h1>配車・手配システム（LINE統合版）<br>市場価値および開発費用 算出レポート</h1>
+
+    <div class="summary-box">
+        <h3>【結論】本システムの推定市場価値</h3>
+        <p style="text-align: center; margin: 10px 0;">
+            受託開発（一式での納品・買取）の場合<br>
+            <span class="price-highlight">約 1,650,000円 〜 3,000,000円</span>
+        </p>
+        <p style="text-align: center; margin: 10px 0;">
+            SaaS型（同業者への月額システム提供）の場合<br>
+            <span class="price-highlight">初期費用: 10万円 ＋ 月額利用料: 1.5万〜3万円</span>
+        </p>
+    </div>
+
+    <p>
+        本システムは「LINEを利用した顧客対応」から「協力会社への配車・手配打診」、および「管理画面での一元管理・状態監視機能」を完全統合した<strong>フルスクラッチ（完全自社個別開発）システム</strong>です。<br>
+        昨今の日本のシステム開発市場（ITベンダー等の相場）を基準に、実装されている本システムの資産価値を以下のように算出いたします。
+    </p>
+
+    <h2>1. 開発費用（受託開発）の算出根拠と内訳</h2>
+    <p>
+        一般的に、LINEアプリ（LIFF）やMessaging APIを用いたビジネス開発は、機能がシンプルなものでも約100万円〜200万円、業務ロジック（予約、手配、ステータス同期）が関わる複雑なシステムは300〜500万円以上が相場とされています。
+    </p>
+    <p>本システムと同等の機能を、システム開発会社等に外注（月単価80万〜120万円想定）して一から再構築した場合の見積もり内訳は以下の通りです。</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>開発工程・機能詳細</th>
+                <th style="width: 35%;">金額目安</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>要件定義・UI設計</strong><br><span style="font-size:8.5pt; color:#666;">・配車フローの業務設計、UI/UX導線設計</span></td>
+                <td>300,000円 〜 500,000円</td>
+            </tr>
+            <tr>
+                <td><strong>フロントエンド開発（管理画面・LIFF）</strong><br><span style="font-size:8.5pt; color:#666;">・管理者用ダッシュボード（React/Vue/JS等）<br>・ステータス同期、アコーディオンリストUI実装</span></td>
+                <td>500,000円 〜 800,000円</td>
+            </tr>
+            <tr>
+                <td><strong>バックエンドAPI・データベース開発</strong><br><span style="font-size:8.5pt; color:#666;">・FastAPI等によるAPI設計、データベース連携<br>・顧客リスト、ステータス更新のCRUD処理</span></td>
+                <td>400,000円 〜 800,000円</td>
+            </tr>
+            <tr>
+                <td><strong>LINE API高度連携開発</strong><br><span style="font-size:8.5pt; color:#666;">・LIFF（お問い合わせ専用アプリ）との連結<br>・協力会社向けFlex MessageとWebhook自動応答</span></td>
+                <td>300,000円 〜 600,000円</td>
+            </tr>
+            <tr>
+                <td><strong>インフラ構築・セキュリティ対策</strong><br><span style="font-size:8.5pt; color:#666;">・Vercelサーバーレス構築、管理者パスワード制御<br>・セッション管理（6時間自動ログアウト機能等）</span></td>
+                <td>150,000円 〜 300,000円</td>
+            </tr>
+            <tr class="total-row">
+                <td style="text-align:right;">システム開発規模価値（合計）</td>
+                <td>1,650,000円 〜 3,000,000円</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>2. 同業者向けSaaSモデルとして展開した際の価値</h2>
+    <p>
+        本システムはカスタマイズ性が高くUIも構築されているため、「運送業・配車業務」を抱える他社にクラウド型システム（SaaS）として月額貸与するビジネスモデルにも対応可能です。<br>
+        国内におけるBtoB特化型のクラウド受発注システムの標準的な価格帯は以下のようになります。
+    </p>
+    <ul>
+        <li><strong>初期導入・環境構築費：</strong> 約50,000円 〜 150,000円 （システムの利用開始サポート等）</li>
+        <li><strong>月額システム利用料：</strong> 10,000円 〜 50,000円 / 月</li>
+    </ul>
+    <p>LINEだけで協力会社への手配が完結する圧倒的な現場の使いやすさ（UX）があるため、業界特化のプレミアムツールとして、月額20,000円前後での販売が適正かつ競争力のある価格帯と考えられます。</p>
+
+    <h2>3. 結論と総評</h2>
+    <p>
+        本システムは、エンドユーザーに対し<strong>「200万円前後の自社専用システム導入」</strong>として提案するのに客観的かつ適正な機能と品質を備えています。<br>
+        また、バックオフィスの業務フロー（受付→手配→ステータス管理→完了確認）という一連の流れがフルデジタル化されており、システム自体の完成度は「市場で流通させるためのMVP（Minimum Viable Product）」の水準を完全クリアしています。今後の販売戦略として、大きな資産価値を持つと言えます。
+    </p>
+
+    <div class="sources">
+        <strong>【相場算出の引用元データ】</strong>
+        <ul style="margin-top:5px; margin-bottom:0;">
+            <li>アイシーソリューションズ: LINE連携システムの開発費用相場（100万〜500万円）</li>
+            <li>iRidge（アイリッジ）: LINEミニアプリ開発の費用相場について（100万〜300万円）</li>
+            <li>お名前.com: フルスクラッチ受発注システム開発費用・相場（数百万円〜）</li>
+            <li>ミツモア・アイミツ: BtoBクラウド型受発注SaaSの月額相場（初期0〜10万・月額1〜5万円前後）</li>
+            <li>※算出日は2026年3月時点の日本の一般的なITベンダーの工数単価（人月80〜120万円）を元に試算。</li>
+        </ul>
+    </div>
+
+</div>
+
+<script>
+    // 画面を開いたら自動的に印刷プレビューを呼び出す（不要であれば手動にしてください）
+    // window.onload = function() { window.print(); }
+</script>
+
+</body>
+</html>
