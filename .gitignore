@@ -7,3 +7,4 @@ __pycache__/
 hubcargo.db
 backend/hubcargo.db
 .DS_Store
+._*

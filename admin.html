@@ -126,7 +126,7 @@
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen flex items-center justify-center font-sans text-gray-800 p-0 md:p-4">
-    <div class="w-full h-[100dvh] md:h-[700px] md:w-[450px] bg-white md:rounded-2xl shadow-2xl overflow-hidden flex flex-col relative border border-gray-200">
+    <div class="w-full h-[100dvh] md:h-[800px] md:w-[700px] bg-white md:rounded-2xl shadow-2xl overflow-hidden flex flex-col relative border border-gray-200">
         <!-- グローバルヘッダー (バナー) -->
                     <div
                         class="bg-gray-900 text-white p-2 px-4 shadow-md flex justify-between items-center z-20 shrink-0 relative">
@@ -147,8 +147,12 @@
                     <!-- 【画面A】受信トレイ（顧客からの連絡） -->
                     <div id="screen-inbox"
                         class="fade-screen flex flex-col flex-1 w-full bg-gray-50 h-full overflow-hidden">
-                        <div class="bg-indigo-900 text-white p-3 shadow-md">
+                        <div class="bg-indigo-900 text-white p-3 shadow-md flex justify-between items-center">
                             <h2 class="font-bold text-sm">📥 顧客からのお問い合わせ</h2>
+                            <button onclick="openCreateModal()" class="text-xs bg-indigo-700 hover:bg-indigo-600 px-2 py-1 rounded transition border border-indigo-500 shadow-sm font-bold flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                新規案件
+                            </button>
                         </div>
                         <div class="flex-1 p-3 overflow-y-auto pb-20">
                             <div id="inboxList" class="space-y-3">
@@ -366,6 +370,47 @@
     </div>
     
 
+    <!-- Create Modal -->
+    <div id="createModal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden transform scale-95 transition-all duration-300" id="createModalContent">
+            <div class="p-5 border-b flex justify-between items-center bg-indigo-50">
+                <h3 class="font-bold text-lg text-indigo-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    手動での案件作成
+                </h3>
+                <button onclick="closeCreateModal()" class="text-indigo-400 hover:text-indigo-600 font-bold text-xl">×</button>
+            </div>
+            <div class="p-5 space-y-3 max-h-[60vh] overflow-y-auto">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">顧客名 <span class="text-red-500">*</span></label>
+                    <input type="text" id="createCustomerName" placeholder="例: 山田太郎" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">電話番号 <span class="text-red-500">*</span></label>
+                    <input type="tel" id="createPhoneNumber" placeholder="例: 090-1234-5678" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">集荷先</label>
+                    <input type="text" id="createPickupLocation" placeholder="例: 東京都渋谷区..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">配送先 / お荷物番号</label>
+                    <input type="text" id="createDeliveryLocation" placeholder="任意" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">詳細</label>
+                    <textarea id="createDetail" rows="3" placeholder="問い合わせ内容や特記事項" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-4 border-t flex gap-3">
+                <button onclick="closeCreateModal()" class="flex-1 bg-white border border-gray-300 text-gray-700 py-2.5 rounded-lg font-bold text-sm hover:bg-gray-50 shadow-sm transition">キャンセル</button>
+                <button onclick="submitManualInquiry()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-indigo-700 shadow-md transition flex justify-center items-center gap-2">
+                    作成する
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Export Modal -->
     <div id="exportModal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden transform scale-95 transition-all duration-300" id="exportModalContent">
@@ -492,6 +537,63 @@
             
             window.open('/report.html?start=' + encodeURIComponent(start) + '&end=' + encodeURIComponent(end) + '&title=' + encodeURIComponent(val) + '&type=' + type, '_blank');
             closeExportModal();
+        }
+
+        function openCreateModal() {
+            document.getElementById('createCustomerName').value = '';
+            document.getElementById('createPhoneNumber').value = '';
+            document.getElementById('createPickupLocation').value = '';
+            document.getElementById('createDeliveryLocation').value = '';
+            document.getElementById('createDetail').value = '';
+            document.getElementById('createModal').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('createModal').classList.remove('opacity-0');
+                document.getElementById('createModalContent').classList.replace('scale-95', 'scale-100');
+            }, 10);
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.add('opacity-0');
+            document.getElementById('createModalContent').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => document.getElementById('createModal').classList.add('hidden'), 300);
+        }
+
+        async function submitManualInquiry() {
+            const customerName = document.getElementById('createCustomerName').value.trim();
+            const phoneNumber = document.getElementById('createPhoneNumber').value.trim();
+            const pickupLocation = document.getElementById('createPickupLocation').value.trim();
+            const deliveryLocation = document.getElementById('createDeliveryLocation').value.trim();
+            const detail = document.getElementById('createDetail').value.trim();
+
+            if (!customerName || !phoneNumber) {
+                alert("顧客名と電話番号は必須です");
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/inquiries', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customer_name: customerName,
+                        phone_number: phoneNumber,
+                        pickup_location: pickupLocation || null,
+                        delivery_location: deliveryLocation || null,
+                        detail: detail || null
+                    })
+                });
+
+                if (response.ok) {
+                    alert("案件を手動作成しました！");
+                    closeCreateModal();
+                    fetchInquiries(); // リストを更新
+                } else {
+                    alert('作成に失敗しました。');
+                }
+            } catch (error) {
+                console.error('Error creating manual inquiry:', error);
+                alert('通信エラーが発生しました。');
+            }
         }
 
         const API_BASE = '/api';
