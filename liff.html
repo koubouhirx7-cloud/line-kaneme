@@ -140,16 +140,14 @@
             btn.disabled = true;
 
             try {
-                const response = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${zip}`);
+                const response = await fetch(`https://api.zipaddress.net/?zipcode=${zip}`);
                 const data = await response.json();
                 
-                if (data.status === 200 && data.results) {
-                    const result = data.results[0];
-                    const address = `${result.address1}${result.address2}${result.address3}`;
+                if (data.code === 200 && data.data) {
                     
                     // 現在の入力値がある場合は上書き確認をするか、あるいは単に追記するか
                     // 今回はシンプルに上書きします（元々入っていればクリアして上書き）
-                    document.getElementById(targetAddressId).value = address;
+                    document.getElementById(targetAddressId).value = data.data.fullAddress;
                 } else {
                     alert("該当する住所が見つかりませんでした。郵便番号をご確認ください。");
                 }
