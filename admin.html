@@ -986,6 +986,21 @@
             }
         }
 
+        async function deleteInquiry(id) {
+            if (!confirm(`本当に受付番号 ${id} の問い合わせを削除しますか？\n（この操作は取り消せません）`)) return;
+            try {
+                const res = await fetch(`${API_BASE}/inquiries/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    await fetchInquiries(); // リストを更新
+                } else {
+                    alert('削除に失敗しました。');
+                }
+            } catch(e) {
+                console.error(e);
+                alert('削除中に通信エラーが発生しました。');
+            }
+        }
+
         async function manualCompleteInquiry(id) {
             if (!confirm(`受付番号 ${id} を手動で「完了」にしますか？`)) return;
             try {
@@ -1155,13 +1170,21 @@
                               `<span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded mr-1">受付済</span>`;
                               
                 const btnState = req.status === 'received' ? 
-                    `<button onclick="goToDispatchById('${req.id}')" class="w-full bg-indigo-600 text-white py-1.5 rounded text-xs font-bold hover:bg-indigo-700 transition shadow-sm mt-2">データを確認して協力会社の手配へ</button>` :
+                    `<div class="flex gap-2 mt-2">
+                        <button onclick="goToDispatchById('${req.id}')" class="flex-1 bg-indigo-600 text-white py-1.5 rounded text-xs font-bold hover:bg-indigo-700 transition shadow-sm">データを確認して協力会社の手配へ</button>
+                        <button onclick='deleteInquiry("${req.id}")' class="px-3 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 py-1.5 rounded text-xs font-bold transition shadow-sm flex items-center justify-center shrink-0" title="削除">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>` :
                     req.status === 'dispatched' ? `
                         <div class="flex gap-2 mt-2">
                             <div class="flex-1 bg-gray-100 text-gray-500 py-1.5 rounded text-xs font-bold text-center border border-gray-200 flex items-center justify-center">報告待ち</div>
                             <button onclick="manualCompleteInquiry('${req.id}')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded text-xs font-bold transition shadow-sm flex items-center justify-center gap-1">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                手動で完了
+                                手動完了
+                            </button>
+                            <button onclick='deleteInquiry("${req.id}")' class="px-3 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 py-1.5 rounded text-xs font-bold transition shadow-sm flex items-center justify-center shrink-0" title="削除">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         </div>
                     ` : '';
